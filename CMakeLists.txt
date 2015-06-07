@@ -24,6 +24,7 @@ enable_testing()
 
 add_executable(test_common
   tests/common.cpp
+  ${shelly_headers}
 )
 target_link_libraries(test_common
   ${GTEST_LIBS_DIR}/libgtest.a
