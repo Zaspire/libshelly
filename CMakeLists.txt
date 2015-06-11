@@ -11,13 +11,14 @@ set(EXT_PROJECTS_DIR ${PROJECT_SOURCE_DIR}/ext)
 add_subdirectory(${EXT_PROJECTS_DIR}/gtest)
 
 include_directories(${GTEST_INCLUDE_DIRS})
-
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -std=c++11 -Wall -Wextra -I${PROJECT_SOURCE_DIR}/include")
+include_directories(${PROJECT_SOURCE_DIR}/include)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -std=c++11 -Wall -Wextra")
 
 set(shelly_headers
   include/common.hpp
   include/shelly.hpp
   include/avl_tree.hpp
+  include/big_int.hpp
 )
 
 enable_testing()
@@ -32,4 +33,16 @@ target_link_libraries(test_common
   ${GTEST_LIBS_DIR}/libgtest_main.a
 )
 add_dependencies(test_common googletest)
+
+add_executable(test_bigint
+  tests/big_int.cpp
+)
+target_link_libraries(test_bigint
+  ${GTEST_LIBS_DIR}/libgtest.a
+  pthread
+  ${GTEST_LIBS_DIR}/libgtest_main.a
+)
+add_dependencies(test_bigint googletest)
+
 add_test(common test_common)
+add_test(bigint test_bigint)
