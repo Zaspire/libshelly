@@ -217,7 +217,11 @@ namespace shelly {
   };
 };
 
+namespace std {
+
 template<typename... T>
-struct std::hash<std::vector<T...>>: shelly::HashContainer<std::vector<T...>> {};
+struct hash<std::vector<T...>>: shelly::HashContainer<std::vector<T...>> {};
+
+};
 
 #endif

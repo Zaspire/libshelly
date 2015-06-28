@@ -8,4 +8,4 @@ before_script:
 build:
         script: "make; make test"
         tags:
-                - cmake
+                - ubuntu
