@@ -1,0 +1,11 @@
+before_script:
+        - apt-get update
+        - apt-get install -y cmake
+        - mkdir build
+        - cd build
+        - cmake -G "Unix Makefiles" ..
+
+build:
+        script: "make; make test"
+        tags:
+                - cmake
