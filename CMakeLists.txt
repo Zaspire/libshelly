@@ -26,6 +26,7 @@ enable_testing()
 add_executable(test_all
   tests/big_int.cpp
   tests/avl_tree.cpp
+  tests/math.cpp
   tests/common.cpp
   tests/string_utils.cpp
   ${shelly_headers}

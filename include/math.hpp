@@ -46,6 +46,19 @@ public:
   }
 };
 
+template<typename T>
+T FastPower(const T &a, int power) {
+  if (power == 0)
+    return 1;
+  if (power == 1)
+    return a;
+  T r = FastPower(a, power / 2);
+  r = r * r;
+  if (power % 2)
+    r = r * a;
+  return r;
+}
+
 std::map<long long, int> Factor(long long N) {
   std::map<long long, int> res;
 
