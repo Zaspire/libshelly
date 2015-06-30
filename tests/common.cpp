@@ -2,7 +2,6 @@
 
 #include "math.hpp"
 #include "shelly.hpp"
-#include "avl_tree.hpp"
 #include "fenwick_tree.hpp"
 
 using namespace std;
@@ -36,35 +35,6 @@ TEST(Shelly, General) {
 
   vector<int> a{1, 2, 3};
   ASSERT_EQ(accumulate(ALL(a), 0), 6);
-}
-
-TEST(AVLTree, General) {
-  {
-  AVLTree<int, int> a;
-
-  for (int i = 0; i < 1000; i++) {
-    a.insert(i, i * i);
-    for (int k = 0; k <= i; k++)
-      ASSERT_EQ(a.Find(k), k * k);
-  }
-  }
-  {
-  AVLTree<int, int> a;
-
-  for (int i = 100; i > 0; i--) {
-    a.insert(i, i * i);
-    for (int k = i; k <= 100; k++)
-      ASSERT_EQ(a.Find(k), k * k);
-  }
-  }
-  /*  AVLTree<int, int> b;
-  mt19937_64 _e1(chrono::system_clock::now().time_since_epoch().count());
-  std::uniform_int_distribution<int> dist(0, 1000000);
-  for (int i = 0; i < 1000; i++) {
-    int t = dist(_e1);
-    b.insert(t, i * i);
-    ASSERT_EQ(b.Find(t), i * i);
-    }*/
 }
 
 TEST(FenwickTree, General) {

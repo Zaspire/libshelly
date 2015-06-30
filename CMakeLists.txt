@@ -23,37 +23,18 @@ set(shelly_headers
 
 enable_testing()
 
-add_executable(test_common
+add_executable(test_all
+  tests/big_int.cpp
+  tests/avl_tree.cpp
   tests/common.cpp
+  tests/string_utils.cpp
   ${shelly_headers}
 )
-target_link_libraries(test_common
+target_link_libraries(test_all
   ${GTEST_LIBS_DIR}/libgtest.a
   pthread
   ${GTEST_LIBS_DIR}/libgtest_main.a
 )
-add_dependencies(test_common googletest)
+add_dependencies(test_all googletest)
 
-add_executable(test_bigint
-  tests/big_int.cpp
-)
-target_link_libraries(test_bigint
-  ${GTEST_LIBS_DIR}/libgtest.a
-  pthread
-  ${GTEST_LIBS_DIR}/libgtest_main.a
-)
-add_dependencies(test_bigint googletest)
-
-add_executable(test_string_utils
-  tests/string_utils.cpp
-)
-target_link_libraries(test_string_utils
-  ${GTEST_LIBS_DIR}/libgtest.a
-  pthread
-  ${GTEST_LIBS_DIR}/libgtest_main.a
-)
-add_dependencies(test_string_utils googletest)
-
-add_test(common test_common)
-add_test(bigint test_bigint)
-add_test(string_utils test_string_utils)
+add_test(all test_all)
