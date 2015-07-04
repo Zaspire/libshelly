@@ -7,8 +7,6 @@ using namespace std;
 using namespace shelly;
 
 TEST(Shelly, General) {
-  ASSERT_EQ(LongestCommonSubsequence("dax1czx23cxcz3ojli", "pomnk11vn23"), 3);
-
   vector<int> a{1, 2, 3};
   ASSERT_EQ(accumulate(ALL(a), 0), 6);
 }
