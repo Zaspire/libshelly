@@ -5,8 +5,28 @@
 #include <vector>
 #include <cassert>
 #include <algorithm>
+#include <stdexcept>
 
 namespace shelly {
+
+// Find first element for which Predicate(element) return true
+template<typename A, typename Predicate>
+int FindFirstTrue(A s, A e, Predicate P, bool first = true) {
+  if (first && (!P(e) || s > e)) {
+    throw new std::exception;
+  }
+  if (e - s < 3) {
+    for (int i = s; i < e; i++) {
+      if (P(i))
+        return i;
+    }
+    return e;
+  }
+  int m = (e - s) / 2 + s;
+  if (P(m))
+    return FindFirstTrue(s, m, P, false);
+  return FindFirstTrue(m, e, P, false);
+}
 
 template<typename T>
 int LongestIncreaseSequence(const std::vector<T> &a) {

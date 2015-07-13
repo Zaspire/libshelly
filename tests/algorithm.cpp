@@ -25,3 +25,29 @@ TEST(LongestCommonSubsequence, General) {
   ASSERT_EQ(LongestCommonSubsequence(t, t), int(t.size()));
   ASSERT_EQ(LongestCommonSubsequence(t, string(t.rbegin(), t.rend())), 1);
 }
+
+TEST(FindFirstTrue, General) {
+  vector<int> a(1000);
+  for (int i = 0; i < 1000; i++)
+    a[i] = i;
+  int v = FindFirstTrue(0, 999, [&a](int i) {
+    return a[i] >= 400;
+  });
+  ASSERT_EQ(v, 400);
+
+  v = FindFirstTrue(0, 999, [](int) {
+    return true;
+  });
+  ASSERT_EQ(v, 0);
+
+  v = FindFirstTrue(0, 999, [](int i) {
+    return i >= 999;
+  });
+  ASSERT_EQ(v, 999);
+
+  ASSERT_ANY_THROW({
+    FindFirstTrue(0, 999, [](int i) {
+      return i >= 2500;
+    });
+  });
+}
