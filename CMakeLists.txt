@@ -29,6 +29,7 @@ add_executable(test_all
   tests/math.cpp
   tests/common.cpp
   tests/string_utils.cpp
+  tests/stream.cpp
   tests/algorithm.cpp
   ${shelly_headers}
 )

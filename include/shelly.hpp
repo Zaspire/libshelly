@@ -105,6 +105,7 @@ template<typename C, typename Func>
 auto Map(const C &container, Func f1) -> std::vector<decltype(f1(*container.begin()))> {
   std::vector<decltype(f1(*container.begin()))> res;
 
+  res.reserve(container.size());
   for (auto &e: container) {
     res.push_back(f1(e));
   }
