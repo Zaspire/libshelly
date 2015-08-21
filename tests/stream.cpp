@@ -67,6 +67,29 @@ TEST(Stream, AllMatch) {
   ASSERT_EQ(b, true);
 }
 
+TEST(Stream, Sorted) {
+  vector<int> b{45, 2, 3, 125};
+  ASSERT_EQ(stream::From(b).Sorted().ToVector(), (vector<int>{2, 3, 45, 125}));
+
+  auto t1 = stream::From(b).Sorted([](int a, int b) {
+    return a > b;
+  }).ToVector();
+  ASSERT_EQ(t1, (vector<int>{125, 45, 3, 2}));
+}
+
+TEST(Stream, FindAny) {
+  auto p1 = stream::Range(1, 1000000000).Filter([](int a) {
+    return a % 5 == 0;
+  }).FindAny();
+  ASSERT_EQ(p1.second, true);
+  ASSERT_EQ(p1.first, 5);
+
+  p1 = stream::Range(1, 50).Filter([](int a) {
+    return a % 50 == 0;
+  }).FindAny();
+  ASSERT_EQ(p1.second, false);
+}
+
 TEST(Stream, ToVector) {
   ASSERT_EQ((stream::Range(1, 4).ToVector()), (vector<int>{1, 2, 3}));
 

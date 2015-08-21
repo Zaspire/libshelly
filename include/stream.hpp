@@ -3,6 +3,7 @@
 
 #include <set>
 #include <vector>
+#include <algorithm>
 #include <functional>
 
 namespace shelly {
@@ -15,6 +16,8 @@ template<typename Stream, typename In, typename Func>
 class FilterStream;
 template<typename Stream, typename In, typename Container>
 class DistinctStream;
+template<typename Stream, typename In, typename Comp>
+class SortedStream;
 
 template<typename In, typename Out>
 class BaseStream {
@@ -60,6 +63,11 @@ public:
   template<typename Container=std::set<In>>
   DistinctStream<BaseStream<In, Out>, In, Container> Distinct() {
     return DistinctStream<BaseStream<In, Out>, In, Container>(this);
+  }
+
+  template<typename Comp = std::less<In>>
+  SortedStream<BaseStream<In, In>, In, Comp> Sorted(Comp c = std::less<In>()) {
+    return SortedStream<BaseStream<In, In>, In, Comp>(this, c);
   }
 
   template<typename Func>
@@ -111,6 +119,10 @@ public:
     return true;
   }
 
+  std::pair<Out, bool> FindAny() {
+    return GetNext();
+  }
+
   size_t Count() {
     size_t res = 0;
 
@@ -141,6 +153,37 @@ public:
   }
 private:
   Container _uniq;
+  Stream *_stream;
+};
+
+template<typename Stream, typename In, typename Comp>
+class SortedStream: public BaseStream<In, In> {
+public:
+  SortedStream(Stream *stream, Comp c): _stream(stream) {
+    while (true) {
+      auto p1 = _stream->GetNext();
+      if (!p1.second)
+        break;
+      _all.push_back(p1.first);
+    }
+    std::sort(_all.begin(), _all.end(), c);
+    _it = _all.begin();
+  }
+  std::pair<In, bool> GetNext() override {
+    std::pair<In, bool> res;
+    if (_it == _all.end()) {
+      res.second = false;
+      return res;
+    }
+    res.second = true;
+    res.first = *_it;
+
+    _it++;
+    return res;
+  }
+private:
+  typename std::vector<In>::const_iterator _it;
+  std::vector<In> _all;
   Stream *_stream;
 };
 
