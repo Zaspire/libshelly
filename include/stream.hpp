@@ -125,6 +125,34 @@ public:
     return GetNext();
   }
 
+  template<typename Comparator = std::less<Out>>
+  std::pair<Out, bool> Min(Comparator c = std::less<Out>()) {
+    std::pair<Out, bool> m;
+    m.second = false;
+    while (true) {
+      auto p1 = GetNext();
+      if (!p1.second)
+        break;
+      if (!m.second || c(p1.first, m.first))
+        m = p1;
+    }
+    return m;
+  }
+
+  template<typename Comparator = std::less<Out>>
+  std::pair<Out, bool> Max(Comparator c = std::less<Out>()) {
+    std::pair<Out, bool> m;
+    m.second = false;
+    while (true) {
+      auto p1 = GetNext();
+      if (!p1.second)
+        break;
+      if (!m.second || c(m.first, p1.first))
+        m = p1;
+    }
+    return m;
+  }
+
   size_t Count() {
     size_t res = 0;
 

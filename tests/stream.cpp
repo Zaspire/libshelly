@@ -5,10 +5,15 @@
 using namespace std;
 using namespace shelly;
 
+struct A {
+};
+
 TEST(Stream, From) {
   vector<int> b{1, 2, 3};
   ASSERT_EQ(stream::From(b).Count(), 3U);
   ASSERT_EQ(stream::From(map<int, int>{{1, 1}, {2, 2}}).Count(), 2U);
+
+  ASSERT_EQ(stream::From(vector<A>{}).Count(), 0U);
 }
 
 TEST(Stream, Filter) {
@@ -147,4 +152,16 @@ TEST(Stream, Limit) {
 TEST(Stream, Of) {
   ASSERT_EQ(stream::Of(1, 2, 3).ToVector(), (vector<int>{1, 2, 3}));
   ASSERT_EQ(stream::Of(1).ToVector(), (vector<int>{1}));
+}
+
+TEST(Stream, Min) {
+  ASSERT_EQ(stream::Of(5, 1, 2, 3).Min().first, 1);
+  ASSERT_TRUE(stream::Of(5, 1, 2, 3).Min().second);
+  ASSERT_FALSE(stream::From(vector<int>{}).Min().second);
+}
+
+TEST(Stream, Max) {
+  ASSERT_EQ(stream::Of(5, 1, 2, 3).Max().first, 5);
+  ASSERT_TRUE(stream::Of(5, 1, 2, 3).Max().second);
+  ASSERT_FALSE(stream::From(vector<int>{}).Max().second);
 }
