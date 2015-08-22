@@ -7,7 +7,7 @@ genrule(
 cc_library(
     name = "shelly",
     srcs = ["empty.cpp"],
-    includes = ["include"],
-    hdrs = glob(["include/*.hpp"]),
+    includes = ["."],
+    hdrs = glob(["shelly/*.hpp"]),
     visibility = ["//visibility:public"],
 )

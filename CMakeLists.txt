@@ -11,14 +11,18 @@ set(EXT_PROJECTS_DIR ${PROJECT_SOURCE_DIR}/ext)
 add_subdirectory(${EXT_PROJECTS_DIR}/gtest)
 
 include_directories(${GTEST_INCLUDE_DIRS})
-include_directories(${PROJECT_SOURCE_DIR}/include)
+include_directories(${PROJECT_SOURCE_DIR}/shelly)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -std=c++11 -Wall -Wextra")
 
 set(shelly_headers
-  include/common.hpp
-  include/shelly.hpp
-  include/avl_tree.hpp
-  include/big_int.hpp
+  shelly/common.hpp
+  shelly/shelly.hpp
+  shelly/avl_tree.hpp
+  shelly/big_int.hpp
+  shelly/stream.hpp
+  shelly/fenwick_tree.hpp
+  shelly/string_utils.hpp
+  shelly/algorithm.hpp
 )
 
 enable_testing()
