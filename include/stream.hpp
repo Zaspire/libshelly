@@ -3,6 +3,7 @@
 
 #include <set>
 #include <vector>
+#include <cassert>
 #include <algorithm>
 #include <functional>
 
@@ -23,6 +24,7 @@ template<typename In, typename Out>
 class BaseStream {
 public:
   virtual std::pair<Out, bool> GetNext() = 0;
+  virtual BaseStream<In, Out>& Limit(size_t l) = 0;
 
   std::vector<Out> ToVector() {
     std::vector<Out> res;
@@ -140,20 +142,34 @@ public:
 template<typename Stream, typename In, typename Container>
 class DistinctStream: public BaseStream<In, In> {
 public:
-  DistinctStream(Stream *stream): _stream(stream) {
+  DistinctStream(Stream *stream): _stream(stream), _limit(-1) {
   }
+
   std::pair<In, bool> GetNext() override {
     while (true) {
-      auto p1 = _stream->GetNext();
+      std::pair<In, bool> p1;
+      if (_limit <= _uniq.size()) {
+        p1.second = false;
+        return p1;
+      }
+      p1 = _stream->GetNext();
       if (!p1.second)
         return p1;
       if (_uniq.insert(p1.first).second)
         return p1;
     }
   }
+
+  BaseStream<In, In>& Limit(size_t l) override {
+    assert(_uniq.empty());
+    _limit = l;
+    return *this;
+  }
+
 private:
   Container _uniq;
   Stream *_stream;
+  size_t _limit;
 };
 
 template<typename Stream, typename In, typename Comp>
@@ -169,6 +185,14 @@ public:
     std::sort(_all.begin(), _all.end(), c);
     _it = _all.begin();
   }
+
+  BaseStream<In, In>& Limit(size_t l) override {
+    assert(_all.begin() == _it);
+    if (l < _all.size())
+      _all.resize(l);
+    return *this;
+  }
+
   std::pair<In, bool> GetNext() override {
     std::pair<In, bool> res;
     if (_it == _all.end()) {
@@ -190,20 +214,31 @@ private:
 template<typename Stream, typename In, typename Func>
 class FilterStream: public BaseStream<In, In> {
 public:
-  FilterStream(Stream *stream, Func f): _stream(stream), _f(f) {
+  FilterStream(Stream *stream, Func f): _stream(stream), _f(f), _limit(-1), _pos(0) {
   }
+
+  BaseStream<In, In>& Limit(size_t l) override {
+    _limit = l;
+    return *this;
+  }
+
   std::pair<In, bool> GetNext() override {
+    if (_limit <= _pos)
+      return std::make_pair(In(), false);
     while (true) {
       auto p1 = _stream->GetNext();
       if (!p1.second)
         return p1;
-      if (_f(p1.first))
+      if (_f(p1.first)) {
+        _pos++;
         return p1;
+      }
     }
   }
 private:
   Stream *_stream;
   Func _f;
+  size_t _limit, _pos;
 };
 
 template<typename Stream, typename In, typename Out, typename Func>
@@ -211,6 +246,12 @@ class MapStream: public BaseStream<In, Out> {
 public:
   MapStream(Stream *stream, Func f): _stream(stream), _f(f) {
   }
+
+  BaseStream<In, Out>& Limit(size_t l) override {
+    _stream->Limit(l);
+    return *this;
+  }
+
   std::pair<Out, bool> GetNext() override {
     auto p1 = _stream->GetNext();
     if (!p1.second)
@@ -226,30 +267,47 @@ private:
 template<typename Iterator>
 class RangeStream: public BaseStream<Iterator, Iterator> {
 public:
-  RangeStream(Iterator it1, Iterator it2): _it1(it1), _it2(it2) {
+  RangeStream(Iterator it1, Iterator it2): _it1(it1), _it2(it2),
+                                           _limit(-1), _pos(0) {
+  }
+
+  BaseStream<Iterator, Iterator>& Limit(size_t l) override {
+    _limit = l;
+    return *this;
   }
 
   std::pair<Iterator, bool> GetNext() override {
-    if (_it1 == _it2)
+    if (_it1 == _it2 || _limit <= _pos)
       return std::make_pair(Iterator(), false);
+    _pos++;
     return std::make_pair(_it1++, true);
   }
 private:
   Iterator _it1, _it2;
+  size_t _limit, _pos;
 };
 
 template<typename Container>
 class ContainerStream: public BaseStream<typename Container::value_type, typename Container::value_type> {
 public:
-  ContainerStream(const Container &c): _it(c.cbegin()), _end(c.cend()) {
+  ContainerStream(const Container &c): _it(c.cbegin()), _end(c.cend()),
+                                       _limit(-1), _pos(0) {
   }
+
+  BaseStream<typename Container::value_type, typename Container::value_type>& Limit(size_t l) override {
+    _limit = l;
+    return *this;
+  }
+
   std::pair<typename Container::value_type, bool> GetNext() override {
-    if (_it == _end)
+    if (_it == _end || _limit <= _pos)
       return std::make_pair(typename Container::value_type(), false);
+    _pos++;
     return std::make_pair(*(_it++), true);
   }
 private:
   typename Container::const_iterator _it, _end;
+  size_t _limit, _pos;
 };
 
 template<typename T>

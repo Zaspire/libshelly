@@ -104,10 +104,10 @@ TEST(Stream, ToVector) {
 TEST(Stream, Distinct) {
   ASSERT_EQ((stream::Range(1, 4).Distinct().Count()), 3U);
 
-  auto t1 = stream::Range(1, 100).Map([](int) {
-    return 1;
+  auto t1 = stream::Range(1, 100).Map([](int n) {
+    return n % 3;
   }).Distinct().ToVector();
-  ASSERT_EQ(t1, (vector<int>{1}));
+  ASSERT_EQ(t1, (vector<int>{1, 2, 0}));
 }
 
 TEST(Stream, Reduce) {
@@ -125,4 +125,21 @@ TEST(Stream, Reduce) {
     return a + b;
   });
   ASSERT_EQ(s, "12345");
+}
+
+TEST(Stream, Limit) {
+  ASSERT_EQ(stream::Range(1, 6).Limit(2).Count(), 2U);
+  ASSERT_EQ(stream::Range(1, 6).Limit(0).Count(), 0U);
+  ASSERT_EQ(stream::From(vector<int>{1, 2, 3, 4}).Limit(2).Count(), 2U);
+
+  ASSERT_EQ(stream::Range(1, 6).Limit(10).Count(), 5U);
+
+  size_t t1 = stream::Range(1, 100).Filter([](int i) {
+    return i % 2 == 0;
+  }).Limit(3).Count();
+  ASSERT_EQ(t1, 3U);
+
+  ASSERT_EQ(stream::From(vector<int>{100, 2, 3, 1}).Sorted().Limit(3).ToVector(), (vector<int>{1, 2, 3}));
+
+  ASSERT_EQ(stream::From(vector<int>{2, 2, 3, 1, 3, 4, 5}).Distinct().Limit(4).ToVector(), (vector<int>{2, 3, 1, 4}));
 }
