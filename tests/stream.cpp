@@ -143,3 +143,8 @@ TEST(Stream, Limit) {
 
   ASSERT_EQ(stream::From(vector<int>{2, 2, 3, 1, 3, 4, 5}).Distinct().Limit(4).ToVector(), (vector<int>{2, 3, 1, 4}));
 }
+
+TEST(Stream, Of) {
+  ASSERT_EQ(stream::Of(1, 2, 3).ToVector(), (vector<int>{1, 2, 3}));
+  ASSERT_EQ(stream::Of(1).ToVector(), (vector<int>{1}));
+}

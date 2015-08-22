@@ -310,6 +310,24 @@ private:
   size_t _limit, _pos;
 };
 
+template<typename Container>
+class CopyContainerStream: public BaseStream<typename Container::value_type, typename Container::value_type> {
+public:
+  CopyContainerStream(const Container &c): _c(c), _delegate(_c) {
+  }
+  BaseStream<typename Container::value_type, typename Container::value_type>& Limit(size_t l) override {
+    _delegate.Limit(l);
+    return *this;
+  }
+
+  std::pair<typename Container::value_type, bool> GetNext() override {
+    return _delegate.GetNext();
+  }
+private:
+  Container _c;
+  ContainerStream<Container> _delegate;
+};
+
 template<typename T>
 RangeStream<T> Range(T a, T b) {
   return RangeStream<T>(a, b);
@@ -318,6 +336,12 @@ RangeStream<T> Range(T a, T b) {
 template<typename Container>
 ContainerStream<Container> From(const Container &c) {
   return ContainerStream<Container>(c);
+}
+
+template<typename Element, typename... Arguments>
+CopyContainerStream<std::vector<Element>> Of(Element f, Arguments... args) {
+  std::vector<Element> r{f, args...};
+  return CopyContainerStream<std::vector<Element>>(r);
 }
 
 }
