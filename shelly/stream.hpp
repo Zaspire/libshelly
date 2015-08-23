@@ -367,6 +367,32 @@ private:
   ContainerStream<Container> _delegate;
 };
 
+template<typename In, typename Func>
+class IterateStream: public BaseStream<In, In> {
+public:
+  IterateStream(In e, Func f):
+    _element(e), _f(f), _limit(-1), _pos(0) {
+  }
+
+  BaseStream<In, In>& Limit(size_t l) override {
+    _limit = l;
+    return *this;
+  }
+
+  std::pair<In, bool> GetNext() override {
+    if (_pos >= _limit)
+      return std::make_pair(_element, false);
+    _pos++;
+    In old = _element;
+    _element = _f(_element);
+    return std::make_pair(old, true);
+  }
+private:
+  In _element;
+  Func _f;
+  size_t _limit, _pos;
+};
+
 template<typename T>
 RangeStream<T> Range(T a, T b) {
   return RangeStream<T>(a, b);
@@ -381,6 +407,11 @@ template<typename Element, typename... Arguments>
 CopyContainerStream<std::vector<Element>> Of(Element f, Arguments... args) {
   std::vector<Element> r{f, args...};
   return CopyContainerStream<std::vector<Element>>(r);
+}
+
+template<typename Element, typename Func>
+IterateStream<Element, Func> Iterate(Element e, Func f) {
+  return IterateStream<Element, Func>(e, f);
 }
 
 }

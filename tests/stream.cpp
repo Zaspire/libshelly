@@ -172,3 +172,10 @@ TEST(Stream, Sum) {
 
   ASSERT_EQ(stream::Of(5.5, 1.5, 2.5, 3.5).Sum(0U), 11U);
 }
+
+TEST(Stream, Iterate) {
+  int t1 = stream::Iterate(0, [](int i) {
+    return i + 5;
+  }).Limit(2).Sum();
+  ASSERT_EQ(t1, 5);
+}
