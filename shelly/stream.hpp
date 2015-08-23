@@ -72,6 +72,17 @@ public:
     return SortedStream<BaseStream<In, In>, In, Comp>(this, c);
   }
 
+  template<typename S = Out>
+  S Sum(S o = 0) {
+    while (true) {
+      auto p1 = GetNext();
+      if (!p1.second)
+        break;
+      o += p1.first;
+    }
+    return o;
+  }
+
   template<typename Func>
   void ForEach(Func f) {
     while (true) {

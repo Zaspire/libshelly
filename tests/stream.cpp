@@ -165,3 +165,10 @@ TEST(Stream, Max) {
   ASSERT_TRUE(stream::Of(5, 1, 2, 3).Max().second);
   ASSERT_FALSE(stream::From(vector<int>{}).Max().second);
 }
+
+TEST(Stream, Sum) {
+  ASSERT_EQ(stream::Of(5, 1, 2, 3).Sum(), 11);
+  ASSERT_EQ(stream::Of(5, 1, 2, 3).Sum(1U), 12U);
+
+  ASSERT_EQ(stream::Of(5.5, 1.5, 2.5, 3.5).Sum(0U), 11U);
+}
