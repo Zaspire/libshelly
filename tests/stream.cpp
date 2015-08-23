@@ -179,3 +179,35 @@ TEST(Stream, Iterate) {
   }).Limit(2).Sum();
   ASSERT_EQ(t1, 5);
 }
+
+TEST(Stream, Skip) {
+  int t1 = stream::Iterate(5, [](int i) {
+    return i + 5;
+  }).Limit(2).Skip(1).Sum();
+  ASSERT_EQ(t1, 10);
+
+  t1 = stream::Iterate(5, [](int i) {
+    return i + 5;
+  }).Skip(1).Limit(2).Sum();
+  ASSERT_EQ(t1, 25);
+
+  ASSERT_EQ(stream::Of(5, 1, 2, 3).Distinct().Skip(1).Limit(2).Sum(), 3);
+  ASSERT_EQ(stream::Of(5, 1, 2, 3).Distinct().Limit(2).Skip(1).Sum(), 1);
+
+  ASSERT_EQ(stream::Of(5, 1, 2, 3).Sorted().Skip(1).Limit(2).Sum(), 5);
+  ASSERT_EQ(stream::Of(5, 1, 2, 3).Sorted().Limit(2).Skip(1).Sum(), 2);
+
+  t1 = stream::Of(5, 1, 2, 3).Filter([](int) {return true;}).Skip(1).Limit(2).Sum();
+  ASSERT_EQ(t1, 3);
+  t1 = stream::Of(5, 1, 2, 3).Filter([](int) {return true;}).Limit(2).Skip(1).Sum();
+  ASSERT_EQ(t1, 1);
+
+  ASSERT_EQ(stream::Range(1, 6).Limit(2).Skip(1).ToVector(), (vector<int>{2}));
+  ASSERT_EQ(stream::Range(1, 6).Skip(1).Limit(2).ToVector(), (vector<int>{2, 3}));
+
+  ASSERT_EQ(stream::From(vector<int>{5, 1, 2, 3}).Skip(1).Limit(2).Sum(), 3);
+  ASSERT_EQ(stream::From(vector<int>{5, 1, 2, 3}).Limit(2).Skip(1).Sum(), 1);
+
+  ASSERT_EQ(stream::Of(5, 1, 2, 3).Skip(1).Limit(2).Sum(), 3);
+  ASSERT_EQ(stream::Of(5, 1, 2, 3).Limit(2).Skip(1).Sum(), 1);
+}

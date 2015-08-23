@@ -25,6 +25,7 @@ class BaseStream {
 public:
   virtual std::pair<Out, bool> GetNext() = 0;
   virtual BaseStream<In, Out>& Limit(size_t l) = 0;
+  virtual BaseStream<In, Out>& Skip(size_t l) = 0;
 
   std::vector<Out> ToVector() {
     std::vector<Out> res;
@@ -199,9 +200,17 @@ public:
     }
   }
 
+  BaseStream<In, In>& Skip(size_t l) override {
+    while (l--) {
+      auto p1 = GetNext();
+      if (!p1.second)
+        break;
+    }
+    return *this;
+  }
+
   BaseStream<In, In>& Limit(size_t l) override {
-    assert(_uniq.empty());
-    _limit = l;
+    _limit = l + _uniq.size();
     return *this;
   }
 
@@ -225,8 +234,14 @@ public:
     _it = _all.begin();
   }
 
+  BaseStream<In, In>& Skip(size_t l) override  {
+    _it += l;
+    return *this;
+  }
+
   BaseStream<In, In>& Limit(size_t l) override {
-    assert(_all.begin() == _it);
+    size_t offset = _it - _all.begin();
+    l += offset;
     if (l < _all.size())
       _all.resize(l);
     return *this;
@@ -256,8 +271,17 @@ public:
   FilterStream(Stream *stream, Func f): _stream(stream), _f(f), _limit(-1), _pos(0) {
   }
 
+  BaseStream<In, In>& Skip(size_t l) override  {
+    while (l--) {
+      auto p1 = GetNext();
+      if (!p1.second)
+        break;
+    }
+    return *this;
+  }
+
   BaseStream<In, In>& Limit(size_t l) override {
-    _limit = l;
+    _limit = l + _pos;
     return *this;
   }
 
@@ -286,6 +310,11 @@ public:
   MapStream(Stream *stream, Func f): _stream(stream), _f(f) {
   }
 
+  BaseStream<In, Out>& Skip(size_t l) override  {
+    _stream->Skip(l);
+    return *this;
+  }
+
   BaseStream<In, Out>& Limit(size_t l) override {
     _stream->Limit(l);
     return *this;
@@ -310,13 +339,19 @@ public:
                                            _limit(-1), _pos(0) {
   }
 
+  BaseStream<Iterator, Iterator>& Skip(size_t l) override  {
+    _it1 += l;
+    _pos += l;
+    return *this;
+  }
+
   BaseStream<Iterator, Iterator>& Limit(size_t l) override {
-    _limit = l;
+    _limit = l + _pos;
     return *this;
   }
 
   std::pair<Iterator, bool> GetNext() override {
-    if (_it1 == _it2 || _limit <= _pos)
+    if (_it1 >= _it2 || _limit <= _pos)
       return std::make_pair(Iterator(), false);
     _pos++;
     return std::make_pair(_it1++, true);
@@ -333,8 +368,16 @@ public:
                                        _limit(-1), _pos(0) {
   }
 
+  BaseStream<typename Container::value_type, typename Container::value_type>& Skip(size_t l) override  {
+    _pos += l;
+    while (l--) {
+      _it++;
+    }
+    return *this;
+  }
+
   BaseStream<typename Container::value_type, typename Container::value_type>& Limit(size_t l) override {
-    _limit = l;
+    _limit = l + _pos;
     return *this;
   }
 
@@ -354,6 +397,12 @@ class CopyContainerStream: public BaseStream<typename Container::value_type, typ
 public:
   CopyContainerStream(const Container &c): _c(c), _delegate(_c) {
   }
+
+  BaseStream<typename Container::value_type, typename Container::value_type>& Skip(size_t l) override  {
+    _delegate.Skip(l);
+    return *this;
+  }
+
   BaseStream<typename Container::value_type, typename Container::value_type>& Limit(size_t l) override {
     _delegate.Limit(l);
     return *this;
@@ -374,8 +423,17 @@ public:
     _element(e), _f(f), _limit(-1), _pos(0) {
   }
 
+  BaseStream<In, In>& Skip(size_t l) override {
+    while (l--) {
+      auto p1 = GetNext();
+      if (!p1.second)
+        break;
+    }
+    return *this;
+  }
+
   BaseStream<In, In>& Limit(size_t l) override {
-    _limit = l;
+    _limit = l + _pos;
     return *this;
   }
 
