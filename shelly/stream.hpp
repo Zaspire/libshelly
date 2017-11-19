@@ -19,13 +19,18 @@ template<typename Stream, typename In, typename Container>
 class DistinctStream;
 template<typename Stream, typename In, typename Comp>
 class SortedStream;
+template<typename Stream1, typename Stream2>
+class ZipStream;
 
-template<typename In, typename Out>
+template<typename Out>
 class BaseStream {
 public:
   virtual std::pair<Out, bool> GetNext() = 0;
-  virtual BaseStream<In, Out>& Limit(size_t l) = 0;
-  virtual BaseStream<In, Out>& Skip(size_t l) = 0;
+  virtual BaseStream<Out>& Limit(size_t l) = 0;
+  virtual BaseStream<Out>& Skip(size_t l) = 0;
+  virtual ~BaseStream<Out>() = default;
+
+  typedef Out OutType;
 
   std::vector<Out> ToVector() {
     std::vector<Out> res;
@@ -53,24 +58,31 @@ public:
   }
 
   template<typename Func>
-  auto Map(Func f) -> MapStream<BaseStream<In, Out>, In, decltype(f(In())), Func> {
-    return MapStream<BaseStream<In, Out>, In,
-                     decltype(f(In())), Func>(this, f);
+  auto Map(Func f) -> MapStream<BaseStream<Out>, Out, decltype(f(Out())), Func> {
+    return MapStream<BaseStream<Out>, Out,
+                     decltype(f(Out())), Func>(this, f);
   }
 
   template<typename Func>
-  FilterStream<BaseStream<In, Out>, In, Func> Filter(Func f) {
-    return FilterStream<BaseStream<In, Out>, In, Func>(this, f);
+  FilterStream<BaseStream<Out>, Out, Func> Filter(Func f) {
+    return FilterStream<BaseStream<Out>, Out, Func>(this, f);
   }
 
-  template<typename Container=std::set<In>>
-  DistinctStream<BaseStream<In, Out>, In, Container> Distinct() {
-    return DistinctStream<BaseStream<In, Out>, In, Container>(this);
+  template<typename Container=std::set<Out>>
+  DistinctStream<BaseStream<Out>, Out, Container> Distinct() {
+    return DistinctStream<BaseStream<Out>, Out, Container>(this);
   }
 
-  template<typename Comp = std::less<In>>
-  SortedStream<BaseStream<In, In>, In, Comp> Sorted(Comp c = std::less<In>()) {
-    return SortedStream<BaseStream<In, In>, In, Comp>(this, c);
+  template<typename Comp = std::less<Out>>
+  SortedStream<BaseStream<Out>, Out, Comp> Sorted(Comp c = std::less<Out>()) {
+    return SortedStream<BaseStream<Out>, Out, Comp>(this, c);
+  }
+
+  template<typename Stream2>
+  ZipStream<BaseStream<Out>, Stream2> Zip(const Stream2 &other) {
+    // all temporaries are destroyed as the last step in
+    // evaluating the full-expression that (lexically) contains the point where they were created
+    return ZipStream<BaseStream<Out>, Stream2>(this, &const_cast<Stream2&>(other));
   }
 
   template<typename S = Out>
@@ -180,7 +192,7 @@ public:
 };
 
 template<typename Stream, typename In, typename Container>
-class DistinctStream: public BaseStream<In, In> {
+class DistinctStream: public BaseStream<In> {
 public:
   DistinctStream(Stream *stream): _stream(stream), _limit(-1) {
   }
@@ -200,7 +212,7 @@ public:
     }
   }
 
-  BaseStream<In, In>& Skip(size_t l) override {
+  BaseStream<In>& Skip(size_t l) override {
     while (l--) {
       auto p1 = GetNext();
       if (!p1.second)
@@ -209,7 +221,7 @@ public:
     return *this;
   }
 
-  BaseStream<In, In>& Limit(size_t l) override {
+  BaseStream<In>& Limit(size_t l) override {
     _limit = l + _uniq.size();
     return *this;
   }
@@ -221,7 +233,7 @@ private:
 };
 
 template<typename Stream, typename In, typename Comp>
-class SortedStream: public BaseStream<In, In> {
+class SortedStream: public BaseStream<In> {
 public:
   SortedStream(Stream *stream, Comp c): _stream(stream) {
     while (true) {
@@ -234,12 +246,12 @@ public:
     _it = _all.begin();
   }
 
-  BaseStream<In, In>& Skip(size_t l) override  {
+  BaseStream<In>& Skip(size_t l) override  {
     _it += l;
     return *this;
   }
 
-  BaseStream<In, In>& Limit(size_t l) override {
+  BaseStream<In>& Limit(size_t l) override {
     size_t offset = _it - _all.begin();
     l += offset;
     if (l < _all.size())
@@ -266,12 +278,12 @@ private:
 };
 
 template<typename Stream, typename In, typename Func>
-class FilterStream: public BaseStream<In, In> {
+class FilterStream: public BaseStream<In> {
 public:
   FilterStream(Stream *stream, Func f): _stream(stream), _f(f), _limit(-1), _pos(0) {
   }
 
-  BaseStream<In, In>& Skip(size_t l) override  {
+  BaseStream<In>& Skip(size_t l) override  {
     while (l--) {
       auto p1 = GetNext();
       if (!p1.second)
@@ -280,7 +292,7 @@ public:
     return *this;
   }
 
-  BaseStream<In, In>& Limit(size_t l) override {
+  BaseStream<In>& Limit(size_t l) override {
     _limit = l + _pos;
     return *this;
   }
@@ -305,17 +317,17 @@ private:
 };
 
 template<typename Stream, typename In, typename Out, typename Func>
-class MapStream: public BaseStream<In, Out> {
+class MapStream: public BaseStream<Out> {
 public:
   MapStream(Stream *stream, Func f): _stream(stream), _f(f) {
   }
 
-  BaseStream<In, Out>& Skip(size_t l) override  {
+  BaseStream<Out>& Skip(size_t l) override  {
     _stream->Skip(l);
     return *this;
   }
 
-  BaseStream<In, Out>& Limit(size_t l) override {
+  BaseStream<Out>& Limit(size_t l) override {
     _stream->Limit(l);
     return *this;
   }
@@ -333,19 +345,19 @@ private:
 };
 
 template<typename Iterator>
-class RangeStream: public BaseStream<Iterator, Iterator> {
+class RangeStream: public BaseStream<Iterator> {
 public:
   RangeStream(Iterator it1, Iterator it2): _it1(it1), _it2(it2),
                                            _limit(-1), _pos(0) {
   }
 
-  BaseStream<Iterator, Iterator>& Skip(size_t l) override  {
+  BaseStream<Iterator>& Skip(size_t l) override  {
     _it1 += l;
     _pos += l;
     return *this;
   }
 
-  BaseStream<Iterator, Iterator>& Limit(size_t l) override {
+  BaseStream<Iterator>& Limit(size_t l) override {
     _limit = l + _pos;
     return *this;
   }
@@ -362,13 +374,13 @@ private:
 };
 
 template<typename Container>
-class ContainerStream: public BaseStream<typename Container::value_type, typename Container::value_type> {
+class ContainerStream: public BaseStream<typename Container::value_type> {
 public:
   ContainerStream(const Container &c): _it(c.cbegin()), _end(c.cend()),
                                        _limit(-1), _pos(0) {
   }
 
-  BaseStream<typename Container::value_type, typename Container::value_type>& Skip(size_t l) override  {
+  BaseStream<typename Container::value_type>& Skip(size_t l) override  {
     _pos += l;
     while (l--) {
       _it++;
@@ -376,7 +388,7 @@ public:
     return *this;
   }
 
-  BaseStream<typename Container::value_type, typename Container::value_type>& Limit(size_t l) override {
+  BaseStream<typename Container::value_type>& Limit(size_t l) override {
     _limit = l + _pos;
     return *this;
   }
@@ -393,17 +405,17 @@ private:
 };
 
 template<typename Container>
-class CopyContainerStream: public BaseStream<typename Container::value_type, typename Container::value_type> {
+class CopyContainerStream: public BaseStream<typename Container::value_type> {
 public:
   CopyContainerStream(const Container &c): _c(c), _delegate(_c) {
   }
 
-  BaseStream<typename Container::value_type, typename Container::value_type>& Skip(size_t l) override  {
+  BaseStream<typename Container::value_type>& Skip(size_t l) override  {
     _delegate.Skip(l);
     return *this;
   }
 
-  BaseStream<typename Container::value_type, typename Container::value_type>& Limit(size_t l) override {
+  BaseStream<typename Container::value_type>& Limit(size_t l) override {
     _delegate.Limit(l);
     return *this;
   }
@@ -417,13 +429,13 @@ private:
 };
 
 template<typename In, typename Func>
-class IterateStream: public BaseStream<In, In> {
+class IterateStream: public BaseStream<In> {
 public:
   IterateStream(In e, Func f):
     _element(e), _f(f), _limit(-1), _pos(0) {
   }
 
-  BaseStream<In, In>& Skip(size_t l) override {
+  BaseStream<In>& Skip(size_t l) override {
     while (l--) {
       auto p1 = GetNext();
       if (!p1.second)
@@ -432,7 +444,7 @@ public:
     return *this;
   }
 
-  BaseStream<In, In>& Limit(size_t l) override {
+  BaseStream<In>& Limit(size_t l) override {
     _limit = l + _pos;
     return *this;
   }
@@ -451,6 +463,44 @@ private:
   size_t _limit, _pos;
 };
 
+template<typename Stream1, typename Stream2>
+class ZipStream: public BaseStream<std::pair<typename Stream1::OutType, typename Stream2::OutType>> {
+public:
+  ZipStream(Stream1 *s1, Stream2 *s2): _s1(s1), _s2(s2) {
+  }
+  typedef std::pair<typename Stream1::OutType, typename Stream2::OutType> Out;
+
+  BaseStream<Out>& Skip(size_t l) override {
+    _s1->Skip(l);
+    _s2->Skip(l);
+    return *this;
+  }
+
+  BaseStream<Out>& Limit(size_t l) override {
+    _s1->Limit(l);
+    _s2->Limit(l);
+    return *this;
+  }
+
+  std::pair<Out, bool> GetNext() override {
+    std::pair<Out, bool> res;
+    auto p1 = _s1->GetNext();
+    auto p2 = _s2->GetNext();
+
+    if (!p1.second || !p2.second) {
+      res.second = false;
+      return res;
+    }
+    res.second = true;
+    res.first.first = p1.first;
+    res.first.second = p2.first;
+    return res;
+  }
+private:
+  Stream1 *_s1;
+  Stream2 *_s2;
+};
+
 template<typename T>
 RangeStream<T> Range(T a, T b) {
   return RangeStream<T>(a, b);
@@ -464,6 +514,12 @@ ContainerStream<Container> From(const Container &c) {
 template<typename Element, typename... Arguments>
 CopyContainerStream<std::vector<Element>> Of(Element f, Arguments... args) {
   std::vector<Element> r{f, args...};
+  return CopyContainerStream<std::vector<Element>>(r);
+}
+
+template<typename Element>
+CopyContainerStream<std::vector<Element>> Empty() {
+  std::vector<Element> r;
   return CopyContainerStream<std::vector<Element>>(r);
 }
 

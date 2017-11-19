@@ -17,12 +17,12 @@ TEST(Stream, From) {
 }
 
 TEST(Stream, Filter) {
-  size_t t1 = stream::Range(1, 101).Filter([](int a) {
+  size_t t1 = stream::Range(3, 101).Filter([](int a) {
     return a % 2 == 0;
   }).Map([](int a) {
     return to_string(a);
   }).Count();
-  ASSERT_EQ(t1, 50U);
+  ASSERT_EQ(t1, 49U);
 }
 
 TEST(Stream, RangeStreamFromIterator) {
@@ -80,6 +80,19 @@ TEST(Stream, Sorted) {
     return a > b;
   }).ToVector();
   ASSERT_EQ(t1, (vector<int>{125, 45, 3, 2}));
+}
+
+TEST(Stream, Zip) {
+  auto a = stream::Range(10, 14);
+  ASSERT_EQ(a.GetNext().first, 10);
+
+  ASSERT_EQ(stream::Range(1, 10).Zip(stream::Range(1, 9)).Count(), 8U);
+  ASSERT_EQ(stream::Range(1, 5).Zip(stream::Range(1, 9)).Count(), 4U);
+
+  bool b = stream::Range(1, 5).Zip(stream::Range(11, 15)).AllMatch([](std::pair<int, int> a) {
+    return a.first + 10 == a.second;
+  });
+  ASSERT_EQ(b, true);
 }
 
 TEST(Stream, FindAny) {
@@ -210,4 +223,19 @@ TEST(Stream, Skip) {
 
   ASSERT_EQ(stream::Of(5, 1, 2, 3).Skip(1).Limit(2).Sum(), 3);
   ASSERT_EQ(stream::Of(5, 1, 2, 3).Limit(2).Skip(1).Sum(), 1);
+
+  t1 = stream::Of(5, 1, 2, 3).Zip(stream::From(vector<int>{7, 1, 22, 30})).Skip(1).Limit(2).Map([](std::pair<int, int> a) {
+      return a.first + a.second;
+  }).Sum();
+  ASSERT_EQ(t1, 26);
+
+  t1 = stream::Of(5, 1, 2, 3).Zip(stream::From(vector<int>{7, 1, 22, 30})).Limit(2).Skip(1).Map([](std::pair<int, int> a) {
+      return a.first + a.second;
+  }).Sum();
+  ASSERT_EQ(t1, 2);
+}
+
+TEST(Stream, Empty) {
+  ASSERT_EQ(stream::Empty<int>().FindAny().second, false);
+  ASSERT_EQ(stream::Empty<A>().FindAny().second, false);
 }
