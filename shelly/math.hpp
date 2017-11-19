@@ -30,6 +30,7 @@ public:
       x -= MOD;
     return *this;
   }
+  //TODO: optimize
   ModInt &operator*=(ModInt o) {
     x = (uint64_t)x * o.x % MOD;
     return *this;
@@ -81,7 +82,7 @@ std::map<long long, int> Factor(long long N) {
 }
 
 template<typename A>
-A ModularMultiplicativeInverse(A a, A b) {
+A ModularMultiplicativeInverse(A a, A b) { // b - Modular
   std::pair<A, A> s = std::make_pair(0/*s*/, 1/*old_s*/), t = std::make_pair(1/*t*/, 0/*old_t*/);
   std::pair<A, A> r = std::make_pair(b, a);
   while (r.first != 0) {
