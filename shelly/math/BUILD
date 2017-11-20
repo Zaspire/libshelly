@@ -5,6 +5,12 @@ cc_library(
 )
 
 cc_library(
+    name = "fraction",
+    hdrs = ["fraction.hpp"],
+    deps = [":math"],
+)
+
+cc_library(
     name = "geometry",
     hdrs = ["geometry.hpp"],
 )
@@ -25,6 +31,15 @@ cc_test(
     srcs = ["big_int_test.cpp"],
     deps = [
         ":big_int",
+	"@com_google_googletest//:gtest_main"
+    ],
+)
+
+cc_test(
+    name = "fraction_test",
+    srcs = ["fraction_test.cpp"],
+    deps = [
+        ":fraction",
 	"@com_google_googletest//:gtest_main"
     ],
 )
