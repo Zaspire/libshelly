@@ -1,4 +1,4 @@
 image: insready/bazel:latest
 
 build:
-        script: "bazel test shelly:all"
+        script: "bazel test shelly/..."

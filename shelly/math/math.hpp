@@ -1,7 +1,7 @@
 #ifndef _SHELLY_MATH_H_FAFLHFJNBVZ843240
 #define _SHELLY_MATH_H_FAFLHFJNBVZ843240
 
-#include "common.hpp"
+#include "shelly/common.hpp"
 
 namespace shelly {
 inline namespace v1 {
@@ -104,80 +104,6 @@ A GreatestCommonDivisor(const A a, const A b) {
     return a;
   return GreatestCommonDivisor(a, b % a);
 }
-
-template<typename A>
-class Line {
-public:
-  Line(A x1, A y1, A x2, A y2): _x1(x1), _y1(y1), _x2(x2), _y2(y2) {
-    assert((x2 - x1) || (y2 - y1));
-  }
-
-  bool Check(A x, A y) {
-    return (x - _x1) * (_y2 - _y1) == (y - _y1) * (_x2 - _x1);
-  }
-private:
-  A _x1, _x2, _y1, _y2;
-};
-
-template<typename A>
-class Matrix {
-public:
-  Matrix(int rows, int columns): _data(rows, std::vector<A>(columns, 0)) {
-    assert(rows > 0);
-    assert(columns > 0);
-  }
-  Matrix<A> transpose() const {
-    Matrix<A> r(_data[0].size(), _data.size());
-    for (size_t i = 0; i < _data.size(); i++) {
-      for (size_t k = 0; k < _data[0].size(); k++) {
-        r._data[k][i] = _data[i][k];
-      }
-    }
-    return r;
-  }
-  Matrix<A> operator*(const Matrix<A> &other) const {
-    assert(_data[0].size() == other._data.size());
-    Matrix<A> r(_data.size(), other._data[0].size());
-
-    for (size_t i = 0; i < _data.size(); i++) {
-      for (size_t k = 0; k < other._data[0].size(); k++) {
-        A t = 0;
-        for (size_t j = 0; j < _data[0].size(); j++)
-          t += _data[i][j] * other._data[j][k];
-        r._data[i][k] = t;
-      }
-    }
-
-    return r;
-  }
-  Matrix<A> operator-(const Matrix<A> &other) const {
-    assert(_data.size() == other._data.size());
-    assert(_data[0].size() == other._data[0].size());
-    Matrix<A> r(_data.size(), _data[0].size());
-
-    for (size_t i = 0; i < _data.size(); i++) {
-      for (size_t k = 0; k < _data[0].size(); k++) {
-        r._data[i][k] = _data[i][k] - other._data[i][k];
-      }
-    }
-
-    return r;
-  }
-  Matrix<A> operator+(const Matrix<A> &other) const {
-    assert(_data.size() == other._data.size());
-    assert(_data[0].size() == other._data[0].size());
-    Matrix<A> r(_data.size(), _data[0].size());
-
-    for (size_t i = 0; i < _data.size(); i++) {
-      for (size_t k = 0; k < _data[0].size(); k++) {
-        r._data[i][k] = _data[i][k] + other._data[i][k];
-      }
-    }
-
-    return r;
-  }
-  std::vector<std::vector<A>> _data;
-};
 
 }
 }

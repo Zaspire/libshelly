@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "math.hpp"
+#include "shelly/math/math.hpp"
 
 using namespace std;
 using namespace shelly;
@@ -11,23 +11,6 @@ TEST(Math, General) {
 
   ASSERT_EQ(GreatestCommonDivisor(10, 37), 1);
   ASSERT_EQ(GreatestCommonDivisor(10, 38), 2);
-}
-
-TEST(Math, Matrix) {
-  Matrix<int> a(2, 1);
-  a._data[0][0] = 2;
-  a._data[1][0] = 1;
-  Matrix<int> b(a.transpose());
-
-  ASSERT_EQ(b._data[0].size(), 2U);
-  ASSERT_EQ(b._data.size(), 1U);
-  ASSERT_EQ(b._data[0][1], 1);
-
-  Matrix<int> c = a * b;
-  ASSERT_EQ(c._data[0].size(), 2U);
-  ASSERT_EQ(c._data.size(), 2U);
-  ASSERT_EQ(c._data[0][0], 4);
-  ASSERT_EQ(c._data[1][1], 1);
 }
 
 TEST(Math, FastPower) {

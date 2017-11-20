@@ -16,18 +16,6 @@ cc_library(
 )
 
 cc_library(
-    name = "big_int",
-    hdrs = ["big_int.hpp"],
-    deps = [":common"],
-)
-
-cc_library(
-    name = "math",
-    hdrs = ["math.hpp"],
-    deps = [":common"],
-)
-
-cc_library(
     name = "avl_tree",
     hdrs = ["avl_tree.hpp"],
     deps = [":common"],
@@ -67,15 +55,6 @@ cc_test(
     ],
 )
 
-cc_test(
-    name = "big_int_test",
-    srcs = ["big_int_test.cpp"],
-    deps = [
-        ":big_int",
-	"@com_google_googletest//:gtest_main"
-    ],
-)
-
 # TODO: split
 cc_test(
     name = "common_test",
@@ -102,15 +81,6 @@ cc_test(
     srcs = ["stream_test.cpp"],
     deps = [
         ":stream",
-	"@com_google_googletest//:gtest_main"
-    ],
-)
-
-cc_test(
-    name = "math_test",
-    srcs = ["math_test.cpp"],
-    deps = [
-        ":math",
 	"@com_google_googletest//:gtest_main"
     ],
 )
