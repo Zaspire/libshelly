@@ -1,3 +1,3 @@
 # libshelly
-![tests status](https://ci.gitlab.com/projects/4146/status.svg?ref=master)
+![tests status](https://gitlab.com/Zaspire/libshelly/badges/master/build.svg)
 ## code snippets for Competitive programming.
