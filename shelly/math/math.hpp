@@ -1,51 +1,10 @@
-#ifndef _SHELLY_MATH_H_FAFLHFJNBVZ843240
-#define _SHELLY_MATH_H_FAFLHFJNBVZ843240
+#ifndef _SHELLY_MATH_MATH_H_FAFLHFJNBVZ843240
+#define _SHELLY_MATH_MATH_H_FAFLHFJNBVZ843240
 
 #include "shelly/common.hpp"
 
 namespace shelly {
 inline namespace v1 {
-
-template<class A, A MOD>
-class ModInt {
-public:
-  static const A kMod = MOD;
-  A x;
-  ModInt(): x(0) {}
-  ModInt(A s) {
-    A sigt = s % MOD;
-    if(sigt < 0)
-      sigt += MOD;
-    x = sigt;
-  }
-  A get() const { return x; }
-
-  ModInt &operator+=(ModInt o) {
-    if((x += o.x) >= MOD)
-      x -= MOD;
-    return *this;
-  }
-  ModInt &operator-=(ModInt o) {
-    if((x += MOD - o.x) >= MOD)
-      x -= MOD;
-    return *this;
-  }
-  //TODO: optimize
-  ModInt &operator*=(ModInt o) {
-    x = (uint64_t)x * o.x % MOD;
-    return *this;
-  }
-
-  ModInt operator+(ModInt o) const {
-    return ModInt(*this) += o;
-  }
-  ModInt operator-(ModInt o) const {
-    return ModInt(*this) -= o;
-  }
-  ModInt operator*(ModInt o) const {
-    return ModInt(*this) *= o;
-  }
-};
 
 template<typename T>
 T FastPower(const T &a, int power) {
@@ -87,9 +46,9 @@ A ModularMultiplicativeInverse(A a, A b) { // b - Modular
   std::pair<A, A> r = std::make_pair(b, a);
   while (r.first != 0) {
     A quotient = r.second / r.first;
-    r = make_pair(r.second - quotient * r.first, r.first);
-    s = make_pair(s.second - quotient * s.first, s.first);
-    t = make_pair(t.second - quotient * t.first, t.first);
+    r = std::make_pair(r.second - quotient * r.first, r.first);
+    s = std::make_pair(s.second - quotient * s.first, s.first);
+    t = std::make_pair(t.second - quotient * t.first, t.first);
   }
   if (s.second >= 0)
     return s.second;

@@ -26,6 +26,20 @@ cc_library(
     hdrs = ["matrix.hpp"],
 )
 
+cc_library(
+    name = "mod_int",
+    hdrs = ["mod_int.hpp"],
+)
+
+cc_library(
+    name = "faulhabers_triangle",
+    hdrs = ["faulhabers_triangle.hpp"],
+    deps = [
+      ":math",
+      ":fraction",
+    ],
+)
+
 cc_test(
     name = "big_int_test",
     srcs = ["big_int_test.cpp"],
@@ -45,6 +59,18 @@ cc_test(
 )
 
 cc_test(
+    name = "faulhabers_triangle_test",
+    srcs = ["faulhabers_triangle_test.cpp"],
+    deps = [
+        ":fraction",
+	":mod_int",
+	":math",
+        ":faulhabers_triangle",
+	"@com_google_googletest//:gtest_main"
+    ],
+)
+
+cc_test(
     name = "geometry_test",
     srcs = ["geometry_test.cpp"],
     deps = [
@@ -58,6 +84,16 @@ cc_test(
     srcs = ["math_test.cpp"],
     deps = [
         ":math",
+	"@com_google_googletest//:gtest_main"
+    ],
+)
+
+cc_test(
+    name = "mod_int_test",
+    srcs = ["mod_int_test.cpp"],
+    deps = [
+        ":math",
+        ":mod_int",
 	"@com_google_googletest//:gtest_main"
     ],
 )

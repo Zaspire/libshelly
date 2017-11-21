@@ -8,6 +8,10 @@
 namespace shelly {
 inline namespace v1 {
 
+int64_t ToInt64(int64_t n) {
+  return n;
+}
+
 template<typename T>
 class Fraction {
 public:
@@ -39,7 +43,7 @@ public:
     return *this;
   }
   void Simplify() {
-    int64_t _n = n, _d = d;
+    int64_t _n = ToInt64(n), _d = ToInt64(d);
     assert(_d > 0);
 
     if (_n == 0) {

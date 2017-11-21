@@ -20,6 +20,4 @@ TEST(Math, FastPower) {
   ASSERT_EQ(FastPower(5, 10), 9765625);
 
   ASSERT_EQ(FastPower(2LL, 53), 9007199254740992LL);
-
-  ASSERT_EQ(FastPower(ModInt<int64_t, 1000000>(7), 1000).get(), 600001);
 }
