@@ -185,7 +185,7 @@ class Timer final {
     gettimeofday(&now, NULL);
     if (_name.size())
       std::cout << _name << " ";
-    std::cout << "Interval:" <<timeeval2longlong(now) - _start << std::endl;
+    std::cout << "Interval:" <<timeeval2longlong(now) - _start << "usec" << std::endl;
   }
  private:
   std::string _name;
