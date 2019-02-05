@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "big_int.hpp"
+#include "shelly/math/big_int.hpp"
 
 using namespace std;
 using namespace shelly;
@@ -154,4 +154,11 @@ TEST(BigInt, Div) {
     a -= 1;
     a /= -555;
   }
+}
+
+TEST(BitInt, FromString) {
+  string n = "1111111222222222222222222";
+  ASSERT_EQ(to_string(BigInt(n)), n);
+  n = "-1111111222222222222222222";
+  ASSERT_EQ(to_string(BigInt(n)), n);
 }

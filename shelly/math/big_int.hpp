@@ -10,14 +10,32 @@ public:
   BigInt(BigInt&&) = default;
   BigInt(const BigInt&) = default;
   BigInt& operator=(const BigInt&) = default;
-  BigInt(): BigInt(0) {
-  }
+  BigInt(): BigInt(0) {}
   BigInt(int64_t d) {
     _negative = d < 0;
     d = std::abs(d);
     while (d) {
       _data.push_back(d % kBase);
       d /= kBase;
+    }
+  }
+  BigInt(const std::string &a) {
+    if (a.empty()) {
+      _negative = false;
+      return;
+    }
+    _negative = a[0] == '-';
+    for (int i = a.size() - 1; i >= 0; i -= kT) {
+      int64_t r = 0, m = 1;
+      for (int k = i, j = kT; j > 0 && k >= 0; j--, k--,m*=10) {
+        assert(a[k] != '-' || k == 0);
+        if (a[k] == '-') {
+          continue;
+        }
+        assert(a[k] >= '0' && a[k] <= '9');
+        r = r + (a[k] - '0') * m;
+      }
+      _data.push_back(r);
     }
   }
 
