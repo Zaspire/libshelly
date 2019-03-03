@@ -162,3 +162,13 @@ TEST(BitInt, FromString) {
   n = "-1111111222222222222222222";
   ASSERT_EQ(to_string(BigInt(n)), n);
 }
+
+TEST(BigInt, Bugs) {
+  BigInt a(20000182084), b(282844);
+
+  ASSERT_EQ(to_string(a - b), "19999899240");
+
+  a = BigInt("2000000001773154969");
+  b = 2828427125;
+  ASSERT_EQ(to_string(a - b), "1999999998944727844");
+}

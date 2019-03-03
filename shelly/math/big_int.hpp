@@ -158,13 +158,13 @@ public:
 
       int64_t r = 0;
       for (size_t i = 0; i < _data.size(); i++) {
-        int64_t t = r + _data[i];
+        int64_t t = _data[i] - r;
         if (s->_data.size() > i) {
           t -= s->_data[i];
         }
         if (t < 0) {
           t += kBase;
-          r++;
+          r = 1;
         } else {
           r = 0;
         }
