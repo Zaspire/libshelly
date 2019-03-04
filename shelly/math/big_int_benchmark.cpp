@@ -7,6 +7,15 @@
 using namespace std;
 using namespace shelly;
 
+BigInt GenerateBigInt(int size, int digit = 9) {
+  string t;
+  t.reserve(size);
+  for (int i = 0; i < size; i++) {
+    t.push_back('9');
+  }
+  return BigInt(t);
+}
+
 void BM_DivisionBigDenominator(benchmark::State& state) {
   string tb, ta;
   for (int i = 0; i < 10000; i++) {
@@ -68,3 +77,13 @@ void BM_MultiplicationByInt(benchmark::State& state) {
   }
 }
 BENCHMARK(BM_MultiplicationByInt);
+
+void BM_Sum(benchmark::State& state) {
+  BigInt a = GenerateBigInt(10000), b = GenerateBigInt(11000);
+
+  for (auto _ : state) {
+    BigInt res = a + b;
+    benchmark::DoNotOptimize(res);
+  }
+}
+BENCHMARK(BM_Sum);

@@ -104,7 +104,7 @@ public:
     BigInt orig = std::move(*this);
     orig._negative = false;
     *this = 0;
-    std::vector<uint32_t> oo;
+    std::vector<int32_t> oo;
     for (size_t i = 0; i < rhs._data.size(); i++) {
       BigInt t = orig;
       t *= int32_t(rhs._data[i]);
@@ -129,7 +129,7 @@ public:
     }
     int64_t r = 0;
     for (size_t i = 0; i < _data.size(); i++) {
-      int64_t t = int64_t(_data[i]) * rhs + r;
+      const int64_t t = int64_t(_data[i]) * rhs + r;
       _data[i] = t % kBase;
       r = t / kBase;
     }
@@ -144,9 +144,9 @@ public:
     bool same = rhs._negative == _negative;
     if (same) { // Abs sum
       _data.resize(std::max(_data.size(), rhs._data.size()), 0);
-      uint32_t r = 0;
+      int32_t r = 0;
       for (size_t i = 0; i < _data.size(); i++) {
-        uint32_t s = _data[i] + r;
+        int32_t s = _data[i] + r;
         if (rhs._data.size() > i)
           s += rhs._data[i];
         _data[i] = s % kBase;
@@ -196,7 +196,7 @@ public:
   friend int64_t operator%(const BigInt &lhs, int64_t m) {
     assert(!lhs._negative && m > 0);
     int64_t r = 0;
-    static int64_t b = kBase % m;
+    const int64_t b = kBase % m;
     int64_t bi = 1;
     for (size_t i = 0; i < lhs._data.size(); i++, bi = (bi * b) % m) {
       r = (r + lhs._data[i] * bi) % m;
@@ -285,7 +285,7 @@ private:
     return 0;
   }
   int16_t _negative;
-  std::vector<uint32_t> _data;
+  std::vector<int32_t> _data;
 
   friend std::string to_string(const BigInt &n);
 };
