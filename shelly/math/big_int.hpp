@@ -5,6 +5,25 @@
 
 namespace shelly {
 
+template<class Compare>
+int IntBinarySearch(int low, int hi, Compare comp) {
+  if (hi - low <= 3) {
+    int i = low;
+    for (; i <= hi; i++) {
+      if (comp(i))
+        break;
+    }
+    assert(i != hi + 1);
+    return i;
+  }
+  int m = low + (hi - low) / 2;
+  if (comp(m)) {
+    return IntBinarySearch(low, m, comp);
+  } else {
+    return IntBinarySearch(m, hi, comp);
+  }
+}
+
 class BigInt {
 public:
   BigInt(BigInt&&) = default;
@@ -53,33 +72,22 @@ public:
     rhs._negative = false;
 
     BigInt res = 0, r = 0;
-    bool b = true;
     for (int i = int(_data.size()) - 1; i >= 0; i--) {
-      std::string d = std::to_string(_data[i]);
-      if (!b) {
-        while (d.size() < kT) {
-          d = std::string("0") + d;
-        }
+      r *= kBase;
+      r += _data[i];
+      if (r < rhs) {
+        continue;
       }
-      b = false;
+      int k = IntBinarySearch(1, kBase, [&rhs, &r](int k) {
+        return rhs * k > r;
+      });
+      k--;
 
-      for (size_t j = 0; j < d.size(); j++) {
-        r *= 10;
-        r += (d[j] - '0');
-        if (r < rhs) {
-          res *= 10;
-          continue;
-        }
-        int k = 2;
-        for (; k < 10; k++) {
-          if (rhs * k > r)
-            break;
-        }
-        k--;
-        r -= rhs * k;
-        res *= 10;
-        res += k;
-      }
+      r -= rhs * k;
+      assert(r >= 0);
+
+      res *= kBase;
+      res += k;
     }
 
     *this = std::move(res);

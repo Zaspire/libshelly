@@ -35,8 +35,8 @@ cc_library(
     name = "faulhabers_triangle",
     hdrs = ["faulhabers_triangle.hpp"],
     deps = [
-      ":math",
-      ":fraction",
+        ":fraction",
+        ":math",
     ],
 )
 
@@ -45,7 +45,16 @@ cc_test(
     srcs = ["big_int_test.cpp"],
     deps = [
         ":big_int",
-	"@com_google_googletest//:gtest_main"
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "big_int_benchmark",
+    srcs = ["big_int_benchmark.cpp"],
+    deps = [
+        ":big_int",
+        "@com_github_google_benchmark//:benchmark_main",
     ],
 )
 
@@ -54,7 +63,7 @@ cc_test(
     srcs = ["fraction_test.cpp"],
     deps = [
         ":fraction",
-	"@com_google_googletest//:gtest_main"
+        "@com_google_googletest//:gtest_main",
     ],
 )
 
@@ -62,11 +71,11 @@ cc_test(
     name = "faulhabers_triangle_test",
     srcs = ["faulhabers_triangle_test.cpp"],
     deps = [
-        ":fraction",
-	":mod_int",
-	":math",
         ":faulhabers_triangle",
-	"@com_google_googletest//:gtest_main"
+        ":fraction",
+        ":math",
+        ":mod_int",
+        "@com_google_googletest//:gtest_main",
     ],
 )
 
@@ -75,7 +84,7 @@ cc_test(
     srcs = ["geometry_test.cpp"],
     deps = [
         ":geometry",
-	"@com_google_googletest//:gtest_main"
+        "@com_google_googletest//:gtest_main",
     ],
 )
 
@@ -84,7 +93,7 @@ cc_test(
     srcs = ["math_test.cpp"],
     deps = [
         ":math",
-	"@com_google_googletest//:gtest_main"
+        "@com_google_googletest//:gtest_main",
     ],
 )
 
@@ -94,7 +103,7 @@ cc_test(
     deps = [
         ":math",
         ":mod_int",
-	"@com_google_googletest//:gtest_main"
+        "@com_google_googletest//:gtest_main",
     ],
 )
 
@@ -103,6 +112,6 @@ cc_test(
     srcs = ["matrix_test.cpp"],
     deps = [
         ":matrix",
-	"@com_google_googletest//:gtest_main"
+        "@com_google_googletest//:gtest_main",
     ],
 )
