@@ -1,7 +1,9 @@
 cc_library(
     name = "big_int",
     hdrs = ["big_int.hpp"],
-    deps = ["//shelly:common"],
+    deps = [
+        "//shelly:common",
+    ],
 )
 
 cc_library(

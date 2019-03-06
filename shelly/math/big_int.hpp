@@ -29,6 +29,7 @@ public:
   BigInt(BigInt&&) = default;
   BigInt(const BigInt&) = default;
   BigInt& operator=(const BigInt&) = default;
+  BigInt& operator=(BigInt&&) = default;
   BigInt(): BigInt(0) {}
   BigInt(int64_t d) {
     _negative = d < 0;
@@ -58,13 +59,13 @@ public:
     }
   }
 
-  const static int32_t kBase = 1000000000; // Power of 10
-  const static int kT = 9; // log10(kBase);
+  static const int32_t kBase = 1000000000; // Power of 10
+  static const int kT = 9; // log10(kBase);
 
   BigInt& operator/=(BigInt rhs) {
     assert(rhs._data.size() && rhs._data.back());
     if (AbsComparison(*this, rhs) < 0) {
-      *this = 0;
+      Clear_();
       return *this;
     }
     bool sign = rhs._negative ^ _negative;
@@ -73,11 +74,13 @@ public:
 
     BigInt res = 0, r = 0;
     for (int i = int(_data.size()) - 1; i >= 0; i--) {
-      r *= kBase;
-      r += _data[i];
-      if (r < rhs) {
+      assert(r._data.empty() || r._data.back());
+      r._data.insert(r._data.begin(), _data[i]);
+
+      if (AbsComparison(r, rhs) < 0) {
         continue;
       }
+
       int k = IntBinarySearch(1, kBase, [&rhs, &r](int k) {
         return rhs * k > r;
       });
@@ -86,11 +89,35 @@ public:
       r -= rhs * k;
       assert(r >= 0);
 
-      res *= kBase;
-      res += k;
+      res._data.insert(res._data.begin(), k);
     }
 
     *this = std::move(res);
+    _negative = sign;
+    return *this;
+  }
+
+  const static int kKaratsubeThreshold = 20;
+  BigInt& KaratsubaMultiplication(const BigInt &rhs) {
+    const int min_size = std::min(_data.size(), rhs._data.size());
+    assert(min_size > kKaratsubeThreshold);
+
+    const int m = min_size / 2;
+    bool sign = _negative ^ rhs._negative;
+
+    BigInt x0(_data.begin(), _data.begin() + m);
+    BigInt x1(_data.begin() + m, _data.end());
+    BigInt y0(rhs._data.begin(), rhs._data.begin() + m);
+    BigInt y1(rhs._data.begin() + m, rhs._data.end());
+
+    BigInt z0(x0 * y0), z2(x1 * y1);
+    BigInt z1((x1 + x0) * (y1 + y0) - z2 - z0);
+
+    *this = std::move(z0);
+
+    AddSameSign_(z2, 2 * m);
+    AddSameSign_(z1, m);
+
     _negative = sign;
     return *this;
   }
@@ -100,31 +127,35 @@ public:
       *this = 0;
       return *this;
     }
+
+    const int min_size = std::min(_data.size(), rhs._data.size());
+    if (min_size > kKaratsubeThreshold) {
+      return KaratsubaMultiplication(rhs);
+    }
+
     bool sign = _negative ^ rhs._negative;
-    BigInt orig = std::move(*this);
+    BigInt orig(std::move(*this));
     orig._negative = false;
-    *this = 0;
-    std::vector<int32_t> oo;
+
+    Clear_();
+    _data.reserve(rhs._data.size() + orig._data.size() + 1);
     for (size_t i = 0; i < rhs._data.size(); i++) {
       BigInt t = orig;
-      t *= int32_t(rhs._data[i]);
-      t._data.insert(t._data.begin(), oo.begin(), oo.end());
+      t *= rhs._data[i];
 
-      *this += t;
-
-      oo.push_back(0);
+      AddSameSign_(t, i);
     }
     _negative = sign;
     return *this;
   }
 
-  BigInt& operator*=(const int32_t rhs) {
+  BigInt& operator*=(int32_t rhs) {
     if (rhs == 0 || _data.empty()) {
-      *this = 0;
-      _negative = false;
+      Clear_();
       return *this;
     }
     if (rhs < 0) {
+      rhs *= -1;
       _negative = !_negative;
     }
     int64_t r = 0;
@@ -143,17 +174,7 @@ public:
   BigInt& operator+=(const BigInt& rhs) {
     bool same = rhs._negative == _negative;
     if (same) { // Abs sum
-      _data.resize(std::max(_data.size(), rhs._data.size()), 0);
-      int32_t r = 0;
-      for (size_t i = 0; i < _data.size(); i++) {
-        int32_t s = _data[i] + r;
-        if (rhs._data.size() > i)
-          s += rhs._data[i];
-        _data[i] = s % kBase;
-        r = s / kBase;
-      }
-      if (r)
-        _data.push_back(r);
+      AddSameSign_(rhs, 0);
     } else {
       const BigInt *s = &rhs;
       BigInt tt;
@@ -187,10 +208,12 @@ public:
     }
     return *this;
   }
-  BigInt& operator-=(BigInt rhs) {
-    //FIXME: avoid copy
-    rhs._negative = !rhs._negative;
-    (*this) += rhs;
+  BigInt& operator-=(const BigInt &rhs) {
+    _negative = !_negative;
+    *this += rhs;
+    if (_data.size() > 0)
+      _negative = !_negative;
+
     return *this;
   }
   friend int64_t operator%(const BigInt &lhs, int64_t m) {
@@ -266,6 +289,43 @@ public:
     return !(lhs < rhs);
   }
 private:
+  int DecimalSize_() const {
+    if (_data.empty()) {
+      return 1;
+    }
+    int first = _data.back();
+    assert(first);
+    int res = int(_data.size() - 1) * kT;
+    while (first) {
+      res++;
+      first /= 10;
+    }
+    return res;
+  }
+  void AddSameSign_(const BigInt& rhs, int rhs_shift) {
+    assert(rhs._negative == _negative);
+
+    _data.resize(std::max(_data.size(), rhs._data.size() + rhs_shift), 0);
+    int64_t r = 0;
+    for (int i = 0; i < int(_data.size()); i++) {
+      int rhs_i = i - rhs_shift;
+      if (rhs_i < 0) {
+        continue;
+      }
+
+      int64_t s = _data[i] + r;
+      if (rhs_i < int(rhs._data.size())) {
+        s += rhs._data[rhs_i];
+      } else if (r == 0) {
+        break;
+      }
+      _data[i] = s % kBase;
+      r = s / kBase;
+    }
+    if (r)
+      _data.push_back(r);
+  }
+
   // 1 lhs is bigger, -1 rhs is bigger
   static int AbsComparison(const BigInt &lhs, const BigInt& rhs) {
     assert(lhs._data.empty() || lhs._data.back());
@@ -284,7 +344,18 @@ private:
     }
     return 0;
   }
-  int16_t _negative;
+  BigInt(std::vector<int32_t>::const_iterator start,
+         std::vector<int32_t>::const_iterator end):
+    _negative(false), _data(start, end) {
+    while (_data.size() && !_data.back()) {
+      _data.pop_back();
+    }
+  }
+  void Clear_() {
+    _data.clear();
+    _negative = false;
+  }
+  bool _negative;
   std::vector<int32_t> _data;
 
   friend std::string to_string(const BigInt &n);
