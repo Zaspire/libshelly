@@ -1,11 +1,11 @@
-#include <gtest/gtest.h>
-
 #include "shelly/math/matrix.hpp"
+
+#include <gtest/gtest.h>
 
 using namespace std;
 using namespace shelly;
 
-TEST(Math, Matrix) {
+TEST(Matrix, Multiplication) {
   Matrix<int> a(2, 1);
   a._data[0][0] = 2;
   a._data[1][0] = 1;

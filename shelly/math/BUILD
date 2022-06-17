@@ -42,6 +42,11 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "graph",
+    hdrs = ["graph.hpp"],
+)
+
 cc_test(
     name = "big_int_test",
     srcs = ["big_int_test.cpp"],
@@ -114,6 +119,15 @@ cc_test(
     srcs = ["matrix_test.cpp"],
     deps = [
         ":matrix",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "graph_test",
+    srcs = ["graph_test.cpp"],
+    deps = [
+        ":graph",
         "@com_google_googletest//:gtest_main",
     ],
 )

@@ -1,6 +1,7 @@
 #ifndef SHELLY_MATH_MATRIX_HPP_AFZVMOJOHRNO789
 #define SHELLY_MATH_MATRIX_HPP_AFZVMOJOHRNO789
 
+#include <cassert>
 #include <vector>
 
 namespace shelly {
