@@ -50,7 +50,7 @@ public:
       d = 1;
       return;
     }
-    int64_t c = GreatestCommonDivisor(abs(_n), _d);
+    int64_t c = GreatestCommonDivisor(std::abs(_n), _d);
     n = _n / c;
     d = _d / c;
   }

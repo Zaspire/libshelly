@@ -1,6 +1,7 @@
 #ifndef SHELLY_MATH_MATRIX_HPP_AFZVMOJOHRNO789
 #define SHELLY_MATH_MATRIX_HPP_AFZVMOJOHRNO789
 
+#include <cstddef>
 #include <cassert>
 #include <vector>
 

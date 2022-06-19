@@ -1,4 +1,6 @@
-image: insready/bazel:latest
+image:
+  name: gcr.io/bazel-public/bazel:5.1.1
+  entrypoint: [""]
 
 build:
-        script: "bazel test shelly/..."
+  script: bazel test shelly/...
