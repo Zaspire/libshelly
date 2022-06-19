@@ -1,6 +1,7 @@
 #ifndef SHELLY_MATH_GRAPH_HPP
 #define SHELLY_MATH_GRAPH_HPP
 
+#include <memory>
 #include <cassert>
 #include <functional>
 #include <limits>
@@ -11,14 +12,16 @@ namespace shelly {
 inline namespace v1 {
 
 static constexpr int kUnreachableVertex = std::numeric_limits<int>::max();
+static constexpr int kInfiniteFlow = std::numeric_limits<int>::max() - 1;
 
 class Graph {
 public:
   struct Edge {
-    Edge(int f, int t, int w) : from(f), to(t), weight(w) {};
+    Edge(int f, int t, int w, int d = false) : from(f), to(t), weight(w), directed(d) {};
     int from, to, weight;
     bool directed = false;
   };
+
   virtual void AddEdge(int from, int to, int weight) = 0;
   void AddEdges(const std::vector<Edge>& edges) {
     for (const Edge &e : edges) {
@@ -29,37 +32,103 @@ public:
     }
   }
 
+  virtual void InsertOrUpdate(int from, int to, int diff) = 0;
+
   virtual int VertexCount() const = 0;
   virtual void EnumerateEdges(
-      int vertex, std::function<void(int other_vertex, int weight)> cb) const = 0;
+      int vertex, const std::function<bool(int other_vertex, int weight)>& cb) const = 0;
+  virtual void EnumerateInboundEdges(
+      int vertex, const std::function<bool(int other_vertex, int weight)>& cb) const = 0;
+  virtual std::unique_ptr<Graph> Clone() const = 0;
 };
 
 class AdjacencyListGraph : public Graph {
 public:
-  AdjacencyListGraph(int vertex_count) : adjacency_(vertex_count) {
+  AdjacencyListGraph(int vertex_count) : outbound_(vertex_count),
+                                         inbound_(vertex_count) {
   }
 
   void AddEdge(int from, int to, int weight) override {
-    adjacency_[from].emplace_back(to, weight);
+    assert(!HasEdge(from, to));
+    outbound_[from].emplace_back(to, weight);
+    inbound_[to].emplace_back(from, weight);
+  }
+
+  void InsertOrUpdate(int from, int to, int diff) override {
+    bool updated = false;
+
+    int w;
+    for (auto& p : outbound_[from]) {
+      if (p.first != to) {
+        continue;
+      }
+      updated = true;
+      p.second += diff;
+      w = p.second;
+      break;
+    }
+    if (!updated) {
+      AddEdge(from, to, diff);
+      return;
+    }
+    bool found_inbound = false;
+    for (auto& p : inbound_[to]) {
+      if (p.first != from) {
+        continue;
+      }
+      found_inbound = true;
+      p.second += diff;
+      assert(w == p.second);
+      break;
+    }
+    assert(found_inbound);
   }
 
   int VertexCount() const override {
-    return adjacency_.size();
+    return outbound_.size();
   }
 
   void EnumerateEdges(
       int vertex,
-      std::function<void(int other_vertex, int weight)> cb) const override {
-    for (const auto& p : adjacency_[vertex]) {
+      const std::function<bool(int other_vertex, int weight)>& cb) const override {
+    for (const auto& p : outbound_[vertex]) {
       int other_vertex, weight;
       std::tie(other_vertex, weight) = p;
-      cb(other_vertex, weight);
+      if (!cb(other_vertex, weight)) {
+        return;
+      }
     }
   }
 
+  void EnumerateInboundEdges(
+      int vertex,
+      const std::function<bool(int other_vertex, int weight)>& cb) const override {
+    for (const auto& p : inbound_[vertex]) {
+      int other_vertex, weight;
+      std::tie(other_vertex, weight) = p;
+      if (!cb(other_vertex, weight)) {
+        return;
+      }
+    }
+  }
+
+  std::unique_ptr<Graph> Clone() const override {
+    return std::unique_ptr<AdjacencyListGraph>(new AdjacencyListGraph(*this));
+  }
+
 private:
+  bool HasEdge(int from, int to) const {
+    for (const auto& p : outbound_[from]) {
+      if (p.first == to) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   // pair<vertex, distance>
-  std::vector<std::vector<std::pair<int, int>>> adjacency_;
+  std::vector<std::vector<std::pair<int, int>>> outbound_;
+  std::vector<std::vector<std::pair<int, int>>> inbound_;
 };
 
 std::vector<int> DijkstraShortestPath(const Graph& graph, int source) {
@@ -83,15 +152,131 @@ std::vector<int> DijkstraShortestPath(const Graph& graph, int source) {
     graph.EnumerateEdges(
         vertex, [distance, &q, &processed, &distances](int other_vertex, int weight) {
       if (distance + weight >= distances[other_vertex]) {
-        return;
+        return true;
       }
       assert(!processed[other_vertex]);
       distances[other_vertex] = distance + weight;
       q.emplace(distance + weight, other_vertex);
+      return true;
     });
   }
 
   return distances;
+}
+
+int ExplorationOrderRecorder(
+    int from, int to,
+    const std::vector<int>& explored, int weight) {
+  if (from == to) {
+    return 0;
+  }
+  return explored[from] + 1;
+}
+
+std::vector<int> BreadthFirstSearch(
+    const Graph& graph, int source, int target,
+    const std::function<int(int from, int to, const std::vector<int>& explored, int weight)>& node_explorer_func) {
+  std::vector<int> explored(graph.VertexCount(), kUnreachableVertex);
+
+  std::queue<int> q;
+  explored[source] = node_explorer_func(source, source, explored, 0);
+  q.push(source);
+  while (!q.empty()) {
+    int v = q.front();
+    q.pop();
+    if (v == target) {
+      break;
+    }
+
+    graph.EnumerateEdges(
+        v, [v, &q, &explored, &node_explorer_func](int other_vertex, int weight) {
+      if (explored[other_vertex] != kUnreachableVertex) {
+        return true;
+      }
+      explored[other_vertex] = node_explorer_func(v, other_vertex, explored, weight);
+      if (explored[other_vertex] != kUnreachableVertex) {
+        q.push(other_vertex);
+      }
+      return true;
+    });
+  }
+  return explored;
+}
+
+int RestoreShortestPathFunc(
+    int from, int to,
+    const std::vector<int>& explored, int weight) {
+  if (from == to) {
+    return 0;
+  }
+  return explored[from] + weight;
+}
+
+std::vector<int> RestorePath(
+    const Graph& graph, int source, int destination, const std::vector<int>& explored,
+    const std::function<int(int from, int to, const std::vector<int>& explored, int weight)>& node_explorer_func = RestoreShortestPathFunc) {
+  assert(explored[destination] != kUnreachableVertex);
+  std::vector<int> path;
+  std::vector<bool> visited(graph.VertexCount(), false);
+  for (int current_vertex = destination; current_vertex != source;) {
+    path.push_back(current_vertex);
+
+    assert(!visited[current_vertex]);
+    visited[current_vertex] = true;
+
+    int next = kUnreachableVertex;
+    graph.EnumerateInboundEdges(
+        current_vertex, [current_vertex, &explored, &next, &node_explorer_func, &visited](int other_vertex, int weight) {
+      if (visited[other_vertex] || explored[other_vertex] == kUnreachableVertex) {
+        return true;
+      }
+      int computed = node_explorer_func(other_vertex, current_vertex, explored, weight);
+      if (computed == explored[current_vertex]) {
+        next = other_vertex;
+        return false;
+      }
+      return true;
+    });
+    assert(next != kUnreachableVertex);
+    current_vertex = next;
+  }
+  path.push_back(source);
+  return std::vector<int>(path.rbegin(), path.rend());;
+}
+
+std::vector<std::vector<int>> MaxFlow(const Graph& graph, int source, int target) {
+  assert(source != target);
+
+  std::vector<std::vector<int>> res(graph.VertexCount(),
+                                    std::vector<int>(graph.VertexCount(), 0));
+  std::unique_ptr<Graph> copy = graph.Clone();
+
+  auto FlowRecorder = [](int from, int to, const std::vector<int>& explored, int weight) -> int {
+    if (from == to) {
+      return kInfiniteFlow;
+    }
+    int res = std::min(weight, explored[from]);
+    if (res > 0) {
+      return res;
+    }
+    return kUnreachableVertex;
+  };
+  for (;;) {
+    std::vector<int> explored = BreadthFirstSearch(
+        *copy, source, target, FlowRecorder);
+    if (explored[target] == kUnreachableVertex) {
+      break;
+    }
+    int value = explored[target];
+    std::vector<int> flow = RestorePath(*copy, source, target, explored, FlowRecorder);
+    for (int i = 1; i < flow.size(); i++) {
+      res[flow[i - 1]][flow[i]] += value;
+      res[flow[i]][flow[i - 1]] -= value;
+      copy->InsertOrUpdate(flow[i - 1], flow[i], -value);
+      copy->InsertOrUpdate(flow[i], flow[i - 1], value);
+    }
+  }
+  return res;
 }
 
 }
