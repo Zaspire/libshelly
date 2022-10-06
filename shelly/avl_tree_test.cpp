@@ -1,7 +1,11 @@
+#include "avl_tree.hpp"
+
+#include <random>
+
 #include <gtest/gtest.h>
 
-#include "avl_tree.hpp"
-#include <random>
+#include "common.hpp"
+
 
 using namespace std;
 using namespace shelly;
