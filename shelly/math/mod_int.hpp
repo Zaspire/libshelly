@@ -42,6 +42,9 @@ public:
   ModInt operator*(const ModInt& o) const {
     return ModInt(*this) *= o;
   }
+  bool operator ==(const ModInt& o) const {
+    return x == o.x;
+  }
 private:
   A x;
 };

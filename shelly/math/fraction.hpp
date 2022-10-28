@@ -1,6 +1,7 @@
 #ifndef SHELLY_MATH_FRACTION_HPP_NKLKJHB780
 #define SHELLY_MATH_FRACTION_HPP_NKLKJHB780
 
+#include <cassert>
 #include <string>
 
 #include "shelly/math/math.hpp"
@@ -35,12 +36,22 @@ public:
   Fraction operator*(const Fraction& o) const {
     return Fraction(*this) *= o;
   }
+  Fraction &operator/=(const Fraction& o) {
+    (*this) *= Fraction(o.d, o.n);
+    return *this;
+  }
+  Fraction operator/(const Fraction& o) const {
+    return Fraction(*this) /= o;
+  }
   Fraction &operator+=(const Fraction& o) {
     n = n * o.d + o.n * d;
     d *= o.d;
 
     Simplify();
     return *this;
+  }
+  Fraction operator+(const Fraction& o) const {
+    return Fraction(*this) += o;
   }
   void Simplify() {
     int64_t _n = ToInt64(n), _d = ToInt64(d);
@@ -53,9 +64,6 @@ public:
     int64_t c = GreatestCommonDivisor(std::abs(_n), _d);
     n = _n / c;
     d = _d / c;
-  }
-  Fraction operator+(const Fraction& o) const {
-    return Fraction(*this) += o;
   }
   Fraction &operator-=(const Fraction& o) {
     n = n * o.d - o.n * d;
