@@ -37,12 +37,17 @@ cc_library(
     hdrs = ["stream.hpp"],
 )
 
+cc_library(
+    name = "distjoint_set",
+    hdrs = ["distjoint_set.hpp"],
+)
+
 cc_test(
     name = "algorithm_test",
     srcs = ["algorithm_test.cpp"],
     deps = [
         ":algorithm",
-	"@com_google_googletest//:gtest_main"
+        "@com_google_googletest//:gtest_main",
     ],
 )
 
@@ -51,7 +56,7 @@ cc_test(
     srcs = ["avl_tree_test.cpp"],
     deps = [
         ":avl_tree",
-	"@com_google_googletest//:gtest_main"
+        "@com_google_googletest//:gtest_main",
     ],
 )
 
@@ -61,9 +66,9 @@ cc_test(
     srcs = ["common_test.cpp"],
     deps = [
         ":common",
-	":shelly",
-	":fenwick_tree",
-	"@com_google_googletest//:gtest_main"
+        ":shelly",
+        ":fenwick_tree",
+        "@com_google_googletest//:gtest_main",
     ],
 )
 
@@ -72,7 +77,7 @@ cc_test(
     srcs = ["string_utils_test.cpp"],
     deps = [
         ":string_utils",
-	"@com_google_googletest//:gtest_main"
+        "@com_google_googletest//:gtest_main",
     ],
 )
 
@@ -81,6 +86,15 @@ cc_test(
     srcs = ["stream_test.cpp"],
     deps = [
         ":stream",
-	"@com_google_googletest//:gtest_main"
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "distjoint_set_test",
+    srcs = ["distjoint_set_test.cpp"],
+    deps = [
+        ":distjoint_set",
+        "@com_google_googletest//:gtest_main",
     ],
 )

@@ -6,7 +6,6 @@
 
 #include "common.hpp"
 
-
 using namespace std;
 using namespace shelly;
 
