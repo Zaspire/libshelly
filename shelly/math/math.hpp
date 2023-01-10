@@ -19,15 +19,15 @@ T FastPower(const T &a, int power) {
   return r;
 }
 
-std::map<long long, int> Factor(long long N) {
-  std::map<long long, int> res;
+std::map<int64_t, int> Factor(int64_t N) {
+  std::map<int64_t, int> res;
 
   while (N % 2 == 0) {
     res[2]++;
     N /= 2;
   }
 
-  for (long long i = 3, t = sqrt(N) + 1; i < t; i += 2) {
+  for (int64_t i = 3, t = sqrt(N) + 1; i < t; i += 2) {
     while (N % i == 0) {
       N /= i;
       res[i]++;

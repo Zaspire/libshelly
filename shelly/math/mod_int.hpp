@@ -49,6 +49,9 @@ private:
   A x;
 };
 
+constexpr int kCommonMod = 1000000007;
+typedef ModInt<int64_t, kCommonMod> MI;
+
 template<class A, A MOD>
 int64_t ToInt64(const ModInt<A, MOD> &n) {
   return n.get();
