@@ -175,12 +175,18 @@ int ExplorationOrderRecorder(
 
 std::vector<int> BreadthFirstSearch(
     const Graph& graph, int source, int target,
+    std::vector<int>& exloration_order,
     const std::function<int(int from, int to, const std::vector<int>& explored, int weight)>& node_explorer_func) {
   std::vector<int> explored(graph.VertexCount(), kUnreachableVertex);
 
+  exloration_order = std::vector<int>(graph.VertexCount(), kUnreachableVertex);
+
   std::queue<int> q;
+
   explored[source] = node_explorer_func(source, source, explored, 0);
+  exloration_order[source] = 0;
   q.push(source);
+
   while (!q.empty()) {
     int v = q.front();
     q.pop();
@@ -189,12 +195,13 @@ std::vector<int> BreadthFirstSearch(
     }
 
     graph.EnumerateEdges(
-        v, [v, &q, &explored, &node_explorer_func](int other_vertex, int weight) {
+        v, [v, &q, &exloration_order, &explored, &node_explorer_func](int other_vertex, int weight) {
       if (explored[other_vertex] != kUnreachableVertex) {
         return true;
       }
       explored[other_vertex] = node_explorer_func(v, other_vertex, explored, weight);
       if (explored[other_vertex] != kUnreachableVertex) {
+        exloration_order[other_vertex] = exloration_order[v] + 1;
         q.push(other_vertex);
       }
       return true;
@@ -213,7 +220,9 @@ int RestoreShortestPathFunc(
 }
 
 std::vector<int> RestorePath(
-    const Graph& graph, int source, int destination, const std::vector<int>& explored,
+    const Graph& graph, int source, int destination,
+    const std::vector<int>& explored,
+    const std::vector<int>& exploration_order = {},// if needed e.g. MaxFlow
     const std::function<int(int from, int to, const std::vector<int>& explored, int weight)>& node_explorer_func = RestoreShortestPathFunc) {
   assert(explored[destination] != kUnreachableVertex);
   std::vector<int> path;
@@ -226,8 +235,13 @@ std::vector<int> RestorePath(
 
     int next = kUnreachableVertex;
     graph.EnumerateInboundEdges(
-        current_vertex, [current_vertex, &explored, &next, &node_explorer_func, &visited](int other_vertex, int weight) {
+        current_vertex, [current_vertex, &exploration_order, &explored,
+                         &next, &node_explorer_func, &visited](int other_vertex, int weight) {
       if (visited[other_vertex] || explored[other_vertex] == kUnreachableVertex) {
+        return true;
+      }
+      if (!exploration_order.empty()
+          && exploration_order[other_vertex] + 1 != exploration_order[current_vertex]) {
         return true;
       }
       int computed = node_explorer_func(other_vertex, current_vertex, explored, weight);
@@ -262,14 +276,16 @@ std::vector<std::vector<int>> MaxFlow(const Graph& graph, int source, int target
     return kUnreachableVertex;
   };
   for (;;) {
+    std::vector<int> exploration_order;
     std::vector<int> explored = BreadthFirstSearch(
-        *copy, source, target, FlowRecorder);
+        *copy, source, target, exploration_order, FlowRecorder);
     if (explored[target] == kUnreachableVertex) {
       break;
     }
     int value = explored[target];
-    std::vector<int> flow = RestorePath(*copy, source, target, explored, FlowRecorder);
-    for (int i = 1; i < flow.size(); i++) {
+    std::vector<int> flow = RestorePath(
+        *copy, source, target, explored, exploration_order, FlowRecorder);
+    for (int i = 1; i < int(flow.size()); i++) {
       res[flow[i - 1]][flow[i]] += value;
       res[flow[i]][flow[i - 1]] -= value;
       copy->InsertOrUpdate(flow[i - 1], flow[i], -value);

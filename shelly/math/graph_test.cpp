@@ -22,9 +22,11 @@ TEST(Graph, ShortestPath) {
             (std::vector<int>{0, 2, 5, 4}));
 
   std::vector<int> expected_bfs{0, 1, 1, 2, 2, 1};
-  EXPECT_EQ(BreadthFirstSearch(g, 0, 4, ExplorationOrderRecorder),
+  std::vector<int> order;
+  EXPECT_EQ(BreadthFirstSearch(g, 0, 4, order, ExplorationOrderRecorder),
             expected_bfs);
-  EXPECT_EQ(RestorePath(g, 0, 4, expected_bfs, ExplorationOrderRecorder),
+  EXPECT_EQ(expected_bfs, order);
+  EXPECT_EQ(RestorePath(g, 0, 4, expected_bfs, order, ExplorationOrderRecorder),
             (std::vector<int>{0, 5, 4}));
 }
 
