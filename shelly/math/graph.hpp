@@ -11,18 +11,22 @@
 namespace shelly {
 inline namespace v1 {
 
-static constexpr int kUnreachableVertex = std::numeric_limits<int>::max();
-static constexpr int kInfiniteFlow = std::numeric_limits<int>::max() - 1;
+typedef int WeightType;
+
+static constexpr WeightType kUnreachableVertex = std::numeric_limits<WeightType>::max();
+static constexpr WeightType kInfiniteFlow = std::numeric_limits<WeightType>::max() - 1;
 
 class Graph {
 public:
   struct Edge {
-    Edge(int f, int t, int w, int d = false) : from(f), to(t), weight(w), directed(d) {};
-    int from, to, weight;
+    Edge(int f, int t,
+         WeightType w, int d = false) : from(f), to(t), weight(w), directed(d) {};
+    int from, to;
+    WeightType weight;
     bool directed = false;
   };
 
-  virtual void AddEdge(int from, int to, int weight) = 0;
+  virtual void AddEdge(int from, int to, WeightType weight) = 0;
   void AddEdges(const std::vector<Edge>& edges) {
     for (const Edge &e : edges) {
       AddEdge(e.from, e.to, e.weight);
@@ -36,9 +40,9 @@ public:
 
   virtual int VertexCount() const = 0;
   virtual void EnumerateEdges(
-      int vertex, const std::function<bool(int other_vertex, int weight)>& cb) const = 0;
+      int vertex, const std::function<bool(int other_vertex, WeightType weight)>& cb) const = 0;
   virtual void EnumerateInboundEdges(
-      int vertex, const std::function<bool(int other_vertex, int weight)>& cb) const = 0;
+      int vertex, const std::function<bool(int other_vertex, WeightType weight)>& cb) const = 0;
   virtual std::unique_ptr<Graph> Clone() const = 0;
 };
 
@@ -48,7 +52,7 @@ public:
                                          inbound_(vertex_count) {
   }
 
-  void AddEdge(int from, int to, int weight) override {
+  void AddEdge(int from, int to, WeightType weight) override {
     assert(!HasEdge(from, to));
     outbound_[from].emplace_back(to, weight);
     inbound_[to].emplace_back(from, weight);
@@ -57,7 +61,7 @@ public:
   void InsertOrUpdate(int from, int to, int diff) override {
     bool updated = false;
 
-    int w;
+    WeightType w;
     for (auto& p : outbound_[from]) {
       if (p.first != to) {
         continue;
@@ -90,9 +94,10 @@ public:
 
   void EnumerateEdges(
       int vertex,
-      const std::function<bool(int other_vertex, int weight)>& cb) const override {
+      const std::function<bool(int other_vertex, WeightType weight)>& cb) const override {
     for (const auto& p : outbound_[vertex]) {
-      int other_vertex, weight;
+      int other_vertex;
+      WeightType weight;
       std::tie(other_vertex, weight) = p;
       if (!cb(other_vertex, weight)) {
         return;
@@ -102,9 +107,10 @@ public:
 
   void EnumerateInboundEdges(
       int vertex,
-      const std::function<bool(int other_vertex, int weight)>& cb) const override {
+      const std::function<bool(int other_vertex, WeightType weight)>& cb) const override {
     for (const auto& p : inbound_[vertex]) {
-      int other_vertex, weight;
+      int other_vertex;
+      WeightType weight;
       std::tie(other_vertex, weight) = p;
       if (!cb(other_vertex, weight)) {
         return;
@@ -127,20 +133,22 @@ private:
   }
 
   // pair<vertex, distance>
-  std::vector<std::vector<std::pair<int, int>>> outbound_;
-  std::vector<std::vector<std::pair<int, int>>> inbound_;
+  std::vector<std::vector<std::pair<int, WeightType>>> outbound_;
+  std::vector<std::vector<std::pair<int, WeightType>>> inbound_;
 };
 
-std::vector<int> DijkstraShortestPath(const Graph& graph, int source) {
-  std::vector<int> distances(graph.VertexCount(), kUnreachableVertex);
+std::vector<WeightType> DijkstraShortestPath(const Graph& graph, int source) {
+  std::vector<WeightType> distances(graph.VertexCount(), kUnreachableVertex);
   std::vector<bool> processed(graph.VertexCount(), false);
   distances[source] = 0;
 
-  std::priority_queue<std::pair<int, int>, std::vector<std::pair<int, int>>,
-                      std::greater<std::pair<int, int>>> q;
+  std::priority_queue<std::pair<WeightType, int>,
+                      std::vector<std::pair<WeightType, int>>,
+                      std::greater<std::pair<WeightType, int>>> q;
   q.emplace(0, source);
   while (!q.empty()) {
-    int vertex, distance;
+    int vertex;
+    WeightType distance;
     std::tie(distance, vertex) = q.top();
     q.pop();
 
@@ -150,7 +158,7 @@ std::vector<int> DijkstraShortestPath(const Graph& graph, int source) {
     processed[vertex] = true;
 
     graph.EnumerateEdges(
-        vertex, [distance, &q, &processed, &distances](int other_vertex, int weight) {
+        vertex, [distance, &q, &processed, &distances](int other_vertex, WeightType weight) {
       if (distance + weight >= distances[other_vertex]) {
         return true;
       }
@@ -166,13 +174,14 @@ std::vector<int> DijkstraShortestPath(const Graph& graph, int source) {
 
 int ExplorationOrderRecorder(
     int from, int to,
-    const std::vector<int>& explored, int weight) {
+    const std::vector<int>& explored, WeightType weight) {
   if (from == to) {
     return 0;
   }
   return explored[from] + 1;
 }
 
+// FIXME: Validate with WeightTyp != int
 std::vector<int> BreadthFirstSearch(
     const Graph& graph, int source, int target,
     std::vector<int>& exloration_order,
@@ -258,12 +267,14 @@ std::vector<int> RestorePath(
   return std::vector<int>(path.rbegin(), path.rend());;
 }
 
-std::vector<std::vector<int>> MaxFlow(const Graph& graph, int source, int target) {
+// FIXME: Validate with WeightTyp != int
+std::vector<std::vector<WeightType>> MaxFlow(
+    const Graph& graph, int source, int target) {
   assert(source != target);
 
   std::vector<std::vector<int>> res(graph.VertexCount(),
                                     std::vector<int>(graph.VertexCount(), 0));
-  std::unique_ptr<Graph> copy = graph.Clone();
+     std::unique_ptr<Graph> copy = graph.Clone();
 
   auto FlowRecorder = [](int from, int to, const std::vector<int>& explored, int weight) -> int {
     if (from == to) {
