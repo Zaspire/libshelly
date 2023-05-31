@@ -11,6 +11,11 @@ cc_library(
 )
 
 cc_library(
+    name = "io_redirector",
+    hdrs = ["io_redirector.hpp"],
+)
+
+cc_library(
     name = "shelly",
     hdrs = ["shelly.hpp"],
 )

@@ -34,8 +34,9 @@ std::map<int64_t, int> Factor(int64_t N) {
       t = sqrt(N) + 1;
     }
   }
-  if (N != 1)
+  if (N != 1) {
     res[N]++;
+  }
 
   return res;
 }
