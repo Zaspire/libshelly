@@ -6,8 +6,8 @@
 namespace shelly {
 inline namespace v1 {
 
-template<typename T>
-T FastPower(const T &a, int power) {
+template<typename T, typename PowerType>
+T FastPower(const T &a, PowerType power) {
   if (power == 0)
     return 1;
   if (power == 1)
