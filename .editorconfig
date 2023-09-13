@@ -3,13 +3,7 @@
 # top-most EditorConfig file
 root = true
 
-[*.cpp]
+[*.{cpp,hpp,h,cc}]
 indent_style = space
 indent_size = 2
 trim_trailing_whitespace = true
-
-[*.hpp]
-indent_style = space
-indent_size = 2
-trim_trailing_whitespace = true
-
