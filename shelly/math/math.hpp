@@ -28,9 +28,13 @@ std::map<int64_t, int> Factor(int64_t N) {
   }
 
   for (int64_t i = 3, t = sqrt(N) + 1; i < t; i += 2) {
+    int count = 0;
     while (N % i == 0) {
       N /= i;
-      res[i]++;
+      count++;
+    }
+    if (count) {
+      res[i] = count;
       t = sqrt(N) + 1;
     }
   }
